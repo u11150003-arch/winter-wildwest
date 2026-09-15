@@ -18,8 +18,8 @@
     }
 
     :root {
-      /* 移到物件游標改為亮黃色星星 */
-      --star-cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'><polygon points='12,1.5 15.3,8.8 23.2,9.6 17.2,14.8 19,22.6 12,18.5 5,22.6 6.8,14.8 0.8,9.6 8.7,8.8' fill='%23ffe600' stroke='%23b38600' stroke-width='1.8'/></svg>") 5 5, auto;
+      /* 低飽和度淡金色星形游標 */
+      --soft-star-cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><polygon points='12,1.5 15.3,8.8 23.2,9.6 17.2,14.8 19,22.6 12,18.5 5,22.6 6.8,14.8 0.8,9.6 8.7,8.8' fill='%23ecd674' stroke='%238a7131' stroke-width='1.5'/></svg>") 5 5, pointer;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-left: env(safe-area-inset-left, 0px);
       --safe-right: env(safe-area-inset-right, 0px);
@@ -32,10 +32,15 @@
       overflow: hidden;
       background: #7b9cb0;
       font-family: "Pixelated MS Sans Serif", Arial, sans-serif !important;
+      cursor: default;
     }
 
-    button, a, .start-menu li, .barn-chip, #ranchCanvas {
-      cursor: var(--star-cursor) !important;
+    /* 只有移到房子按鈕時變淡金星星 */
+    .barn-chip, .clickable-barn-hover {
+      cursor: var(--soft-star-cursor) !important;
+    }
+
+    button, a, .start-menu li {
       font-family: "Pixelated MS Sans Serif", Arial, sans-serif !important;
     }
 
@@ -85,7 +90,7 @@
       font-size: 23px;
       letter-spacing: 3px;
       color: #fff3b0;
-      text-shadow: 2px 2px 0px #5c2c09, 0 0 10px rgba(0,0,0,0.6);
+      text-shadow: 2px 2px 0px #4d2e18, 0 0 10px rgba(0,0,0,0.5);
       font-family: monospace, sans-serif;
     }
     .ranch-header p {
@@ -104,7 +109,7 @@
       width: 100%; height: 100%; display: block;
     }
 
-    /* 視訊分割容器 (背景改為天空色) */
+    /* 視訊分割容器 */
     .video-chat-container {
       display: none;
       position: absolute;
@@ -129,7 +134,7 @@
       }
     }
 
-    /* 視窗框：Windows 經典 98 藍風格 */
+    /* Windows 經典藍視窗 */
     .video-win {
       position: relative;
       background: #c0c0c0;
@@ -162,7 +167,6 @@
       margin: 2px;
     }
 
-    /* 視訊裁切視窗：徹底隱藏 YouTube 帳號名稱、秒數與控制鍵字樣 */
     .video-viewport-box {
       position: relative;
       width: 100%;
@@ -182,30 +186,21 @@
       justify-content: center;
       transform-origin: center center;
     }
-    /* iframe 放大 135% 裁掉上下標題列與控制項 */
+    /* 放大 130% 外推，切除 YouTube 邊緣帳號與文字 */
     .video-element-wrapper iframe {
       position: absolute;
-      width: 135% !important;
-      height: 135% !important;
+      width: 130% !important;
+      height: 130% !important;
       top: 50% !important;
       left: 50% !important;
       transform: translate(-50%, -50%) !important;
       border: none !important;
-      pointer-events: none !important; /* 徹底杜絕任何 YouTube 介面浮現 */
     }
     .video-element-wrapper video {
       width: 100%;
       height: 100%;
       object-fit: contain;
       border: none;
-    }
-
-    .yt-pointer-guard {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      z-index: 20;
-      background: transparent;
-      pointer-events: auto;
     }
 
     .mirror-cam { transform: scaleX(-1); width: 100%; height: 100%; object-fit: cover; }
@@ -336,14 +331,16 @@
       <div class="video-win">
         <div class="video-win-header">
           <span id="winterVideoTitle">🤠 WINTER</span>
-          <span style="font-size:10px; color:#a2ffb3;">LIVE REC ●</span>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <button type="button" id="unmuteBtn" style="font-size:9px; padding:1px 4px; background:#ffd700; font-weight:bold;" onclick="toggleVideoSound()">🔊 開啟聲音</button>
+            <span style="font-size:10px; color:#a2ffb3;">LIVE REC ●</span>
+          </div>
         </div>
         <div class="video-win-body">
           <div class="video-viewport-box">
             <div class="video-element-wrapper" id="winterVideoWrapper">
               <iframe id="winterVideoIframe" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline controls loop></video>
-              <div class="yt-pointer-guard"></div>
             </div>
           </div>
         </div>
@@ -404,7 +401,7 @@
   <!-- 2. 環境與天地比例調整面板 -->
   <div class="window modal-win" id="envModal" onclick="event.stopPropagation()">
     <div class="title-bar">
-      <div class="title-bar-text">🏞️ 天空地表比例與圖片調整</div>
+      <div class="title-bar-text">🏞️ 天空地表比例調整</div>
       <div class="title-bar-controls"><button aria-label="Close" onclick="closeModal('envModal')"></button></div>
     </div>
     <div class="window-body">
@@ -428,18 +425,18 @@
     <div class="window-body">
       <div style="font-size:11px; font-weight:bold; margin-bottom:4px;">🐶 小狗設置</div>
       <div class="slider-row"><span>圖片網址:</span><input type="text" id="dogImgInput" onchange="updateCharSettings()"></div>
-      <div class="slider-row"><span>大小比例:</span><input type="range" id="dogSizeScale" min="50" max="220" value="105" oninput="updateCharSettings()"><span id="dogSizeScaleVal">105%</span></div>
+      <div class="slider-row"><span>大小比例:</span><input type="range" id="dogSizeScale" min="50" max="250" value="130" oninput="updateCharSettings()"><span id="dogSizeScaleVal">130%</span></div>
       <hr style="margin:6px 0;">
       <div style="font-size:11px; font-weight:bold; margin-bottom:4px;">🐴 小馬設置</div>
       <div class="slider-row"><span>圖片網址:</span><input type="text" id="horseImgInput" onchange="updateCharSettings()"></div>
-      <div class="slider-row"><span>大小比例:</span><input type="range" id="horseSizeScale" min="50" max="220" value="95" oninput="updateCharSettings()"><span id="horseSizeScaleVal">95%</span></div>
+      <div class="slider-row"><span>大小比例:</span><input type="range" id="horseSizeScale" min="50" max="250" value="115" oninput="updateCharSettings()"><span id="horseSizeScaleVal">115%</span></div>
       <div style="display:flex; justify-content:flex-end; margin-top:10px;">
         <button type="button" style="font-weight:bold; background:#000080; color:#fff;" onclick="saveRanchState(); closeModal('charModal');">確認儲存</button>
       </div>
     </div>
   </div>
 
-  <!-- 4. 自訂物件/仙人掌面板 -->
+  <!-- 4. 自訂物件面板 -->
   <div class="window modal-win" id="propsModal" onclick="event.stopPropagation()">
     <div class="title-bar">
       <div class="title-bar-text">🌵 自訂物件與仙人掌管理</div>
@@ -482,7 +479,6 @@
       <button type="button" onclick="toggleStartMenu(event)" style="font-weight:bold; display:flex; align-items:center; gap:4px; height:26px; padding:0 6px;">
         🤠 WINTER
       </button>
-      <!-- 最下排改為 WILDWEST -->
       <button type="button" onclick="returnToRanchMap()" style="font-weight:bold; display:flex; align-items:center; gap:4px; height:26px; padding:0 6px;">
         🐎 WILDWEST
       </button>
@@ -496,7 +492,7 @@
     const ADMIN_PASSWORD = "admin";
     let isAdmin = false;
 
-    // 寬敞的棟距配置，仙人掌坐落於間隙（0.34 與 0.66），圖層在最底層
+    // 低飽和度房子與清晰放大之角色
     const RANCH_MASTER_CONFIG = {
       "environment": {
         "horizonRatio": 0.67
@@ -507,11 +503,11 @@
       "characters": {
         "dog": {
           "image": "https://lh3.googleusercontent.com/d/17WOfRelvxF9qJrmBwUpOuJGdgFaLj06o",
-          "scale": 105
+          "scale": 130 // 顯著放大，手機看得清
         },
         "horse": {
           "image": "",
-          "scale": 95
+          "scale": 115
         }
       },
       "customProps": [
@@ -560,7 +556,7 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_final_v6";
+    const CONFIG_KEY = "winter_wildwest_v2026_fixed_v7";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -569,6 +565,14 @@
     let userCameraStream = null;
     let ranchAnimFrame = null;
     let animTimer = 0;
+    let isVideoMuted = true;
+
+    // 動態飄動雲朵
+    let cloudList = [
+      { x: 30, yRatio: 0.22, speed: 0.35, scale: 1.1 },
+      { x: 180, yRatio: 0.38, speed: 0.22, scale: 0.95 },
+      { x: 320, yRatio: 0.15, speed: 0.28, scale: 1.0 }
+    ];
 
     let dogPos = { x: 0, y: 0, targetX: 0, targetY: 0, dir: -1 };
     let horsePos = { x: 0, y: 0, targetX: 0, targetY: 0, dir: 1 };
@@ -663,14 +667,14 @@
           isAdmin = true;
           document.body.classList.add('admin-mode');
           document.getElementById('authBtn').innerText = "🔓 退出管理";
-          alert("登入成功！已解鎖管理與調控功能。");
+          alert("登入成功！已解鎖管理功能。");
         } else if (input !== null) {
           alert("密碼錯誤！");
         }
       }
     }
 
-    // 按鍵 ICON 改為牛仔帽 🤠
+    // 按鍵圖示改為房子 🏠
     function renderSelectorChips() {
       const bar = document.getElementById('barnSelectorBar');
       if (!bar) return;
@@ -680,7 +684,7 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = `barn-chip ${idx === activeBarnIndex ? 'active' : ''}`;
-        btn.innerHTML = `🤠 ${b.name}`;
+        btn.innerHTML = `🏠 ${b.name}`;
         btn.onclick = () => selectBarnAndMove(idx);
         bar.appendChild(btn);
       });
@@ -745,14 +749,18 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 播放視訊：全面消除標題列、帳號名稱、秒數與控制鍵
+    // 支援 iOS 手機無阻自動播放 (以 mute=1 突破限制)
     function playWinterVideo(barn) {
       const url = barn.videoUrl;
       const iframe = document.getElementById('winterVideoIframe');
       const directVideo = document.getElementById('winterVideoDirect');
+      const unmuteBtn = document.getElementById('unmuteBtn');
       const adj = barn.adjust || { scale: 100, x: 50, y: 50, start: 0, end: 0 };
       const startSec = parseInt(adj.start, 10) || 0;
       const endSec = parseInt(adj.end, 10) || 0;
+
+      isVideoMuted = true;
+      if (unmuteBtn) unmuteBtn.innerText = "🔊 開啟聲音";
 
       if (loopTimer) clearInterval(loopTimer);
       if (!url) return;
@@ -764,8 +772,8 @@
         directVideo.pause(); directVideo.src = ''; directVideo.style.display = 'none';
         iframe.style.display = 'block';
 
-        // 參數注入去除所有進度條與大播放鍵
-        let params = `autoplay=1&mute=0&loop=1&playlist=${ytId}&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
+        // 關鍵：mute=1 + autoplay=1 + playsinline=1，iOS 才能秒速自動播放
+        let params = `autoplay=1&mute=1&playsinline=1&loop=1&playlist=${ytId}&controls=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0&enablejsapi=1`;
         if (startSec > 0) params += `&start=${startSec}`;
         if (endSec > startSec) params += `&end=${endSec}`;
 
@@ -786,11 +794,12 @@
         directVideo.style.display = 'block';
         directVideo.loop = (endSec <= startSec);
         directVideo.src = url;
-        directVideo.load();
+        directVideo.muted = true; // 預先靜音以通過自動播放驗證
+        directVideo.play().catch(() => {});
 
         directVideo.onloadedmetadata = () => {
           if (startSec > 0 && startSec < directVideo.duration) directVideo.currentTime = startSec;
-          directVideo.play().catch(() => { directVideo.muted = true; directVideo.play(); });
+          directVideo.play().catch(() => {});
         };
 
         directVideo.ontimeupdate = () => {
@@ -805,6 +814,27 @@
           directVideo.play();
         };
       }
+    }
+
+    // 點擊即時開啟 / 關閉聲音
+    function toggleVideoSound() {
+      const iframe = document.getElementById('winterVideoIframe');
+      const directVideo = document.getElementById('winterVideoDirect');
+      const unmuteBtn = document.getElementById('unmuteBtn');
+
+      if (directVideo.style.display !== 'none') {
+        directVideo.muted = !directVideo.muted;
+        isVideoMuted = directVideo.muted;
+      } else if (iframe && iframe.contentWindow) {
+        isVideoMuted = !isVideoMuted;
+        const action = isVideoMuted ? 'mute' : 'unMute';
+        iframe.contentWindow.postMessage(JSON.stringify({
+          event: 'command',
+          func: action,
+          args: []
+        }), '*');
+      }
+      unmuteBtn.innerText = isVideoMuted ? "🔊 開啟聲音" : "🔇 靜音";
     }
 
     function stopWinterVideo() {
@@ -1015,21 +1045,19 @@
     }
 
     // ==============================================================
-    // HTML5 Canvas 荒野渲染系統 (精準對齊截圖風格與前後圖層)
+    // HTML5 Canvas 系統 (浮動橫向像素雲、低飽和木屋、碰房子變淡金星星)
     // ==============================================================
     function initRanchSystem() {
       const canvas = document.getElementById('ranchCanvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
 
-      // 產生截圖顆粒紋理地面
       const groundTexCanvas = document.createElement('canvas');
       groundTexCanvas.width = 64;
       groundTexCanvas.height = 64;
       const gtCtx = groundTexCanvas.getContext('2d');
-      gtCtx.fillStyle = '#c28c5a'; // 截圖土黃色
+      gtCtx.fillStyle = '#c28c5a';
       gtCtx.fillRect(0, 0, 64, 64);
-      // 微細噪點
       for (let i = 0; i < 220; i++) {
         const gx = Math.random() * 64;
         const gy = Math.random() * 64;
@@ -1048,13 +1076,38 @@
 
         if (!isDogHeadingToBarn) {
           dogPos.x = dogPos.targetX = canvas.width * 0.36;
-          dogPos.y = dogPos.targetY = horizonY; // 腳底精確貼地，不浮空
+          dogPos.y = dogPos.targetY = horizonY;
           horsePos.x = horsePos.targetX = canvas.width * 0.68;
           horsePos.y = horsePos.targetY = horizonY;
         }
       }
       resize();
       window.addEventListener('resize', resize);
+
+      // 滑鼠懸停偵測：只有碰到房子時，游標才切換為淡金星星
+      canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const isMobile = canvas.width < 768;
+        const horizonY = canvas.height * (ranchConfig.environment.horizonRatio || 0.67);
+        let hoveringHouse = false;
+
+        barnsData.forEach((b) => {
+          const bx = canvas.width * b.xRatio;
+          const bw = isMobile ? 88 : 130;
+          const bh = bw * 0.95;
+          if (mx >= bx - bw/2 && mx <= bx + bw/2 && my >= horizonY - bh && my <= horizonY + 10) {
+            hoveringHouse = true;
+          }
+        });
+
+        if (hoveringHouse) {
+          canvas.classList.add('clickable-barn-hover');
+        } else {
+          canvas.classList.remove('clickable-barn-hover');
+        }
+      });
 
       canvas.addEventListener('click', (e) => {
         const rect = canvas.getBoundingClientRect();
@@ -1065,7 +1118,7 @@
 
         barnsData.forEach((b, idx) => {
           const bx = canvas.width * b.xRatio;
-          const bw = isMobile ? 92 : 135; // 放大適當比例
+          const bw = isMobile ? 88 : 130;
           const bh = bw * 0.95;
 
           if (mx >= bx - bw/2 && mx <= bx + bw/2 && my >= horizonY - bh && my <= horizonY + 15) {
@@ -1074,19 +1127,23 @@
         });
       });
 
-      // 截圖白色階梯雲朵
-      function drawScreenshotCloud(cx, cy, scale) {
+      // 寬扁比例自然的橫向像素浮雲
+      function drawFloatingPixelCloud(x, y, scale) {
         ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
         ctx.fillStyle = '#ffffff';
-        const p = scale * 5;
-        ctx.fillRect(cx - 3*p, cy, 6*p, 2.5*p);
-        ctx.fillRect(cx - 2*p, cy - 2*p, 4*p, 4.5*p);
-        ctx.fillRect(cx - 1*p, cy - 3.5*p, 2*p, 6*p);
+
+        // 扁平自然雲朵層次
+        ctx.fillRect(-22, -3, 44, 6);
+        ctx.fillRect(-16, -7, 32, 4);
+        ctx.fillRect(-8, -11, 16, 4);
+        ctx.fillRect(4, -14, 8, 3);
         ctx.restore();
       }
 
-      // 截圖同款木造房子
-      function drawWesternBarn(x, y, width, title, isSelected, customImgUrl) {
+      // 降低飽和度的復古西部木屋
+      function drawLowSatBarn(x, y, width, title, isSelected, customImgUrl) {
         const h = width * 0.92;
         ctx.save();
         ctx.translate(x, y);
@@ -1097,13 +1154,13 @@
             ctx.drawImage(holder.img, -width/2, -h, width, h);
           }
         } else {
-          // 主屋身
-          ctx.fillStyle = isSelected ? '#a8422b' : '#883120';
+          // 低飽和啞光深褐木牆
+          ctx.fillStyle = isSelected ? '#844233' : '#6b3728';
           ctx.fillRect(-width/2, -h, width, h);
 
-          // 木紋線條
-          ctx.strokeStyle = '#5a1d10';
-          ctx.lineWidth = 1.6;
+          // 復古木板縫隙
+          ctx.strokeStyle = '#432219';
+          ctx.lineWidth = 1.4;
           for (let py = -h + 14; py < 0; py += 14) {
             ctx.beginPath();
             ctx.moveTo(-width/2, py);
@@ -1111,73 +1168,68 @@
             ctx.stroke();
           }
 
-          // 山形斜屋頂
-          ctx.fillStyle = '#4c170d';
+          // 低飽和深色木屋頂
+          ctx.fillStyle = '#43261f';
           ctx.beginPath();
-          ctx.moveTo(-width/2 - 10, -h);
-          ctx.lineTo(0, -h - width * 0.40);
-          ctx.lineTo(width/2 + 10, -h);
+          ctx.moveTo(-width/2 - 9, -h);
+          ctx.lineTo(0, -h - width * 0.38);
+          ctx.lineTo(width/2 + 9, -h);
           ctx.closePath();
           ctx.fill();
 
           // 閣樓白色十字方窗
           const winSize = width * 0.23;
-          ctx.fillStyle = '#220804';
-          ctx.fillRect(-winSize/2, -h - width * 0.24, winSize, winSize);
-          ctx.strokeStyle = '#fff3b0';
-          ctx.lineWidth = 1.8;
-          ctx.strokeRect(-winSize/2, -h - width * 0.24, winSize, winSize);
+          ctx.fillStyle = '#1c0f0c';
+          ctx.fillRect(-winSize/2, -h - width * 0.22, winSize, winSize);
+          ctx.strokeStyle = '#f3eedb';
+          ctx.lineWidth = 1.6;
+          ctx.strokeRect(-winSize/2, -h - width * 0.22, winSize, winSize);
           ctx.beginPath();
-          ctx.moveTo(-winSize/2, -h - width * 0.24);
-          ctx.lineTo(winSize/2, -h - width * 0.24 + winSize);
-          ctx.moveTo(winSize/2, -h - width * 0.24);
-          ctx.lineTo(-winSize/2, -h - width * 0.24 + winSize);
+          ctx.moveTo(-winSize/2, -h - width * 0.22);
+          ctx.lineTo(winSize/2, -h - width * 0.22 + winSize);
+          ctx.moveTo(winSize/2, -h - width * 0.22);
+          ctx.lineTo(-winSize/2, -h - width * 0.22 + winSize);
           ctx.stroke();
 
           // 正門
           const doorW = width * 0.35;
           const doorH = h * 0.58;
-          ctx.fillStyle = '#1c0502';
+          ctx.fillStyle = '#170c0a';
           ctx.fillRect(-doorW/2, -doorH, doorW, doorH);
 
-          // 木牌招牌
-          ctx.fillStyle = '#d4a373';
-          ctx.fillRect(-width * 0.44, -h + 6, width * 0.88, 19);
+          // 低飽和淺褐木牌
+          ctx.fillStyle = '#b38865';
+          ctx.fillRect(-width * 0.44, -h + 6, width * 0.88, 18);
           ctx.strokeStyle = '#5a3d28';
-          ctx.lineWidth = 1.2;
-          ctx.strokeRect(-width * 0.44, -h + 6, width * 0.88, 19);
+          ctx.lineWidth = 1.0;
+          ctx.strokeRect(-width * 0.44, -h + 6, width * 0.88, 18);
 
-          ctx.fillStyle = '#3a1f0d';
-          ctx.font = 'bold 9.5px monospace';
+          ctx.fillStyle = '#2d180d';
+          ctx.font = 'bold 9px monospace';
           ctx.textAlign = 'center';
-          ctx.fillText(title, 0, -h + 19);
+          ctx.fillText(title, 0, -h + 18);
         }
 
         ctx.restore();
       }
 
-      // 截圖仙人掌（深綠、平頂、分枝對齊截圖）
+      // 仙人掌
       function drawScreenshotCactus(x, y, scale) {
         ctx.save();
         ctx.translate(x, y);
         ctx.scale(scale, scale);
 
-        // 主軀幹
         ctx.fillStyle = '#2b6b55';
         ctx.fillRect(-6, -42, 12, 42);
-
-        // 左臂分枝
         ctx.fillRect(-18, -26, 12, 6);
         ctx.fillRect(-18, -38, 6, 14);
-
-        // 右臂分枝
         ctx.fillRect(6, -26, 12, 6);
         ctx.fillRect(12, -38, 6, 14);
 
         ctx.restore();
       }
 
-      // 修正小馬：完整頭部、鬃毛、馬耳、四肢步伐
+      // 小馬
       function drawHorseWithHead(x, y, scale) {
         ctx.save();
         ctx.translate(x, y);
@@ -1185,11 +1237,11 @@
 
         const bob = Math.sin(animTimer * 5) * 1.0;
 
-        // 馬身軀幹
-        ctx.fillStyle = '#8b4513';
+        // 馬身
+        ctx.fillStyle = '#7a3e1d';
         ctx.fillRect(-18, -28 + bob, 36, 18);
 
-        // 馬頸向前上方傾斜延伸
+        // 馬頸
         ctx.beginPath();
         ctx.moveTo(8, -24 + bob);
         ctx.lineTo(20, -42 + bob);
@@ -1198,31 +1250,28 @@
         ctx.closePath();
         ctx.fill();
 
-        // 完整清晰的立體馬頭
-        ctx.fillStyle = '#7a3c10';
+        // 馬頭
+        ctx.fillStyle = '#6b3314';
         ctx.fillRect(18, -48 + bob, 15, 12);
-        ctx.fillRect(29, -45 + bob, 6, 7); // 嘴鼻
+        ctx.fillRect(29, -45 + bob, 6, 7);
 
-        // 馬耳朵
-        ctx.fillStyle = '#5c2c09';
+        // 馬耳
+        ctx.fillStyle = '#4f220a';
         ctx.fillRect(19, -54 + bob, 4, 7);
 
-        // 黑色深色鬃毛
-        ctx.fillStyle = '#2b1202';
+        // 鬃毛與尾巴
+        ctx.fillStyle = '#220e03';
         ctx.fillRect(8, -42 + bob, 6, 18);
-
-        // 馬尾巴
         ctx.fillRect(-22, -26 + bob, 5, 16);
 
-        // 四肢交替步伐 (腳底貼地 y = 0)
+        // 步伐 (腳底貼地)
         const swing = Math.sin(animTimer * 5) * 2.5;
-        ctx.fillStyle = '#5c2c09';
+        ctx.fillStyle = '#54260e';
         ctx.fillRect(-13 + swing, -10 + bob, 4.5, 11);
         ctx.fillRect(-5 - swing, -10 + bob, 4.5, 11);
         ctx.fillRect(5 - swing, -10 + bob, 4.5, 11);
         ctx.fillRect(13 + swing, -10 + bob, 4.5, 11);
 
-        // 馬蹄
         ctx.fillStyle = '#111';
         ctx.fillRect(-13 + swing, 1 + bob, 4.5, 3);
         ctx.fillRect(-5 - swing, 1 + bob, 4.5, 3);
@@ -1232,13 +1281,12 @@
         ctx.restore();
       }
 
-      // 小狗：腳底確實貼齊地平線、絕不浮空、保留完整臉孔
+      // 小狗
       function drawGroundedDog(x, y, scale) {
         ctx.save();
         ctx.translate(x, y);
         ctx.scale(scale * (dogPos.dir > 0 ? 1 : -1), scale);
 
-        // 微幅呼吸踏步 (0.5px)
         const bob = Math.sin(animTimer * 5) * 0.5;
         const chars = ranchConfig.characters;
 
@@ -1247,14 +1295,12 @@
           if (holder && holder.ready) {
             const dw = 46;
             const dh = 46;
-            // 腳掌完全貼齊地面基準線 y = 0
-            ctx.drawImage(holder.img, -dw/2, -dh + 6 + bob, dw, dh);
+            ctx.drawImage(holder.img, -dw/2, -dh + 5 + bob, dw, dh);
             ctx.restore();
             return;
           }
         }
 
-        // 備用完整牛仔白狗
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(-12, -18 + bob, 24, 14);
         ctx.fillRect(6, -26 + bob, 13, 11);
@@ -1265,12 +1311,10 @@
         ctx.fillRect(14, -23 + bob, 2.5, 2.5);
         ctx.fillRect(17, -20 + bob, 2.5, 2);
 
-        // 帽子
-        ctx.fillStyle = '#8b5a2b';
+        ctx.fillStyle = '#7a4b22';
         ctx.fillRect(2, -30 + bob, 18, 3);
         ctx.fillRect(5, -35 + bob, 12, 5.5);
 
-        // 四肢
         ctx.fillStyle = '#ededed';
         ctx.fillRect(-9, -4 + bob, 3.5, 5);
         ctx.fillRect(-2, -4 + bob, 3.5, 5);
@@ -1292,7 +1336,6 @@
 
         ctx.save();
 
-        // 點擊平滑鏡頭 Zoom-In 特寫
         if (isZoomingScene) {
           sceneZoomScale += (4.2 - sceneZoomScale) * 0.12;
           const focusX = targetBarn ? w * targetBarn.xRatio : dogPos.x;
@@ -1302,22 +1345,24 @@
           ctx.translate(-focusX, -focusY);
         }
 
-        // ==================== 1. 天空區塊 (截圖灰藍色 + 像素雲) ====================
-        ctx.fillStyle = '#7b9cb0'; // 截圖純淨灰藍
+        // ==================== 1. 天空與水平飄移像素雲 ====================
+        ctx.fillStyle = '#7b9cb0';
         ctx.fillRect(0, 0, w, horizonY);
 
-        drawScreenshotCloud(w * 0.38, horizonY * 0.28, isMobile ? 1.0 : 1.4);
-        drawScreenshotCloud(w * 0.36, horizonY * 0.42, isMobile ? 0.9 : 1.2);
+        cloudList.forEach(cl => {
+          cl.x += cl.speed;
+          if (cl.x > w + 60) cl.x = -60;
+          drawFloatingPixelCloud(cl.x, horizonY * cl.yRatio, isMobile ? cl.scale * 0.9 : cl.scale * 1.3);
+        });
 
-        // ==================== 2. 地板區塊 (截圖土黃色 + 顆粒雜色 + 深褐地平線) ====================
+        // ==================== 2. 地板 (深褐色地平線) ====================
         ctx.fillStyle = groundPattern;
         ctx.fillRect(0, horizonY, w, h - horizonY);
 
-        // 深褐色地平線 (完全符合截圖)
         ctx.fillStyle = '#643818';
         ctx.fillRect(0, horizonY, w, 5);
 
-        // ==================== 3. 仙人掌 (圖層在最底層！優先繪製，絕不遮擋前景) ====================
+        // ==================== 3. 仙人掌 (最底層，絕不擋房) ====================
         (ranchConfig.customProps || []).forEach(prop => {
           const px = w * prop.xRatio;
           const py = horizonY + (prop.yOffset || 0);
@@ -1325,16 +1370,16 @@
           drawScreenshotCactus(px, py, pScale);
         });
 
-        // ==================== 4. 繪製三棟房子 (比例放大適當、棟距充足) ====================
-        const barnBaseW = isMobile ? 92 : 135;
+        // ==================== 4. 房子 (低飽和復古木屋) ====================
+        const barnBaseW = isMobile ? 88 : 130;
         barnsData.forEach((b, idx) => {
           const bx = w * b.xRatio;
-          drawWesternBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
+          drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
         });
 
-        // ==================== 5. 狗與小馬移動邏輯 (比例放大、腳踏實地、自然邁步) ====================
-        const dogScale = ((ranchConfig.characters.dog.scale || 105) / 100) * (isMobile ? 0.9 : 1.2);
-        const horseScale = ((ranchConfig.characters.horse.scale || 95) / 100) * (isMobile ? 0.85 : 1.15);
+        // ==================== 5. 狗與馬 (手機版比例顯著放大、清楚看得見) ====================
+        const dogScale = ((ranchConfig.characters.dog.scale || 130) / 100) * (isMobile ? 1.05 : 1.25);
+        const horseScale = ((ranchConfig.characters.horse.scale || 115) / 100) * (isMobile ? 0.95 : 1.2);
 
         if (isDogHeadingToBarn) {
           dogPos.dir = (dogPos.targetX > dogPos.x) ? 1 : -1;
@@ -1350,10 +1395,7 @@
           if (horsePos.x > w * 0.90) horsePos.dir = -1;
         }
 
-        // 繪製小馬 (具備完整立體頭部與鬃毛)
         drawHorseWithHead(horsePos.x, horsePos.y, horseScale);
-
-        // 繪製小狗 (牢牢踏地、完整臉龐)
         drawGroundedDog(dogPos.x, dogPos.y, dogScale);
 
         ctx.restore();
