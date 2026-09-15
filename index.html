@@ -186,7 +186,7 @@
       transform-origin: center center;
     }
     
-    /* 放大外推，並加入防干擾遮罩，徹底杜絕黑線與暫停圖標 */
+    /* 放大 130% 外推，切除邊緣 YouTube 介面與黑線 */
     .video-element-wrapper iframe {
       position: absolute;
       width: 130% !important;
@@ -202,14 +202,6 @@
       height: 100%;
       object-fit: contain;
       border: none;
-    }
-
-    /* 隱形點擊穿透層：保護畫面不受游標懸停出現的進度條與暫停圖示干擾 */
-    .yt-pointer-shield {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      z-index: 10;
-      background: transparent;
     }
 
     .mirror-cam { transform: scaleX(-1); width: 100%; height: 100%; object-fit: cover; }
@@ -347,7 +339,6 @@
             <div class="video-element-wrapper" id="winterVideoWrapper">
               <iframe id="winterVideoIframe" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline controls loop></video>
-              <div class="yt-pointer-shield"></div>
             </div>
           </div>
         </div>
@@ -559,7 +550,7 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_bubble_v8";
+    const CONFIG_KEY = "winter_wildwest_v2026_direct_sound_v10";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -569,7 +560,6 @@
     let ranchAnimFrame = null;
     let animTimer = 0;
 
-    // 雲朵位置下移（yRatio 0.38 ~ 0.52），比例寬扁自然對稱
     let cloudList = [
       { x: 30, yRatio: 0.42, speed: 0.32, scale: 1.15 },
       { x: 220, yRatio: 0.50, speed: 0.22, scale: 1.0 },
@@ -584,9 +574,7 @@
     let targetBarn = null;
     let loopTimer = null;
 
-    // 對話框定時器：狗10秒循環(顯示3秒)，馬15秒循環(顯示3秒)
     let dogBubbleTimer = 0;
-    let horseBubbleTimer = 0;
 
     const imageCache = {};
     function formatDriveUrl(url) {
@@ -709,10 +697,14 @@
       renderSelectorChips();
     }
 
+    // 關鍵突破：在點擊當下的 User Gesture 中直接激活音訊並加載視訊
     function selectBarnAndMove(idx) {
       activeBarnIndex = idx;
       renderSelectorChips();
       targetBarn = barnsData[idx];
+
+      // 1. 在點擊瞬間直接觸發帶聲音播放，確保通過 iOS 限制
+      enterVideoChat(targetBarn);
 
       const canvas = document.getElementById('ranchCanvas');
       const w = canvas.width;
@@ -723,13 +715,6 @@
       dogPos.targetX = barnX;
       dogPos.targetY = horizonY;
       isDogHeadingToBarn = true;
-
-      setTimeout(() => {
-        isZoomingScene = true;
-        setTimeout(() => {
-          enterVideoChat(targetBarn);
-        }, 700);
-      }, 600);
     }
 
     function enterVideoChat(barn) {
@@ -740,7 +725,7 @@
 
       document.getElementById('winterVideoTitle').innerText = `🤠 WINTER [${barn.name}]`;
       applyVideoTransform(barn);
-      playWinterVideo(barn);
+      playWinterVideoDirectWithSound(barn);
       initUserWebcam();
     }
 
@@ -754,8 +739,8 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 突破靜音限制，一點入就有聲音，並持續循環
-    function playWinterVideo(barn) {
+    // 有聲直播核心：mute=0, autoplay=1，並用 postMessage 強制播放與解鎖音訊
+    function playWinterVideoDirectWithSound(barn) {
       const url = barn.videoUrl;
       const iframe = document.getElementById('winterVideoIframe');
       const directVideo = document.getElementById('winterVideoDirect');
@@ -773,17 +758,28 @@
         directVideo.pause(); directVideo.src = ''; directVideo.style.display = 'none';
         iframe.style.display = 'block';
 
-        // mute=0 有聲自動播放，controls=0 去除進度條與介面
-        let params = `autoplay=1&mute=0&playsinline=1&loop=1&playlist=${ytId}&controls=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0&enablejsapi=1`;
+        // 直接設定 mute=0，在同一步驟中自動播放
+        let params = `autoplay=1&mute=0&playsinline=1&loop=1&playlist=${ytId}&controls=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
         if (startSec > 0) params += `&start=${startSec}`;
         if (endSec > startSec) params += `&end=${endSec}`;
 
         iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?${params}`;
 
+        // 監聽並定時發送 unMute 與 play 指令
+        const sendPlaySignal = () => {
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
+            iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+          }
+        };
+        setTimeout(sendPlaySignal, 300);
+        setTimeout(sendPlaySignal, 800);
+
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
           loopTimer = setInterval(() => {
             iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?${params}`;
+            setTimeout(sendPlaySignal, 300);
           }, duration);
         }
       } else if (driveId) {
@@ -795,11 +791,17 @@
         directVideo.style.display = 'block';
         directVideo.loop = (endSec <= startSec);
         directVideo.src = url;
-        directVideo.muted = false;
-        directVideo.play().catch(() => {
-          directVideo.muted = true;
-          directVideo.play();
-        });
+        directVideo.muted = false; // 直接開啟聲音
+        
+        const playPromise = directVideo.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            directVideo.muted = true;
+            directVideo.play().then(() => {
+              directVideo.muted = false;
+            });
+          });
+        }
 
         directVideo.onloadedmetadata = () => {
           if (startSec > 0 && startSec < directVideo.duration) directVideo.currentTime = startSec;
@@ -877,7 +879,7 @@
       saveRanchState();
       closeModal('adjustModal');
       alert("✅ 視訊設定已儲存！");
-      playWinterVideo(barnsData[activeBarnIndex]);
+      playWinterVideoDirectWithSound(barnsData[activeBarnIndex]);
     }
 
     function openEnvironmentModal() {
@@ -1023,7 +1025,7 @@
 
       saveRanchState();
       if (document.getElementById('videoChatContainer').classList.contains('active')) {
-        playWinterVideo(b);
+        playWinterVideoDirectWithSound(b);
       }
     }
 
@@ -1067,7 +1069,7 @@
       resize();
       window.addEventListener('resize', resize);
 
-      // 滑鼠懸停偵測：碰到房子才切換淡金星星
+      // 滑鼠懸停偵測：碰到房子切換淡金色星星游標
       canvas.addEventListener('mousemove', (e) => {
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
@@ -1117,13 +1119,13 @@
         ctx.scale(scale, scale);
         ctx.fillStyle = '#ffffff';
 
-        // 第1層 (最底層，最寬)
+        // 第1層 (底層最寬)
         ctx.fillRect(-24, 0, 48, 6);
-        // 第2層 (次寬)
+        // 第2層
         ctx.fillRect(-18, -6, 36, 6);
-        // 第3層 (中階)
+        // 第3層
         ctx.fillRect(-12, -12, 24, 6);
-        // 第4層 (最頂層，置中完全對稱)
+        // 第4層 (頂層完全對稱置中)
         ctx.fillRect(-6, -18, 12, 6);
 
         ctx.restore();
@@ -1210,25 +1212,24 @@
         ctx.restore();
       }
 
-      // 對話框像素氣泡繪製器
-      function drawPixelSpeechBubble(x, y, text) {
+      // 支援淡入淡出的像素對話框
+      function drawFadingSpeechBubble(x, y, text, alpha) {
         ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
         ctx.font = "bold 11px monospace";
         const textW = ctx.measureText(text).width;
-        const padX = 7;
+        const padX = 8;
         const boxW = textW + padX * 2;
         const boxH = 20;
 
         ctx.translate(x, y);
 
-        // 氣泡主體
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(-boxW / 2, -boxH, boxW, boxH);
         ctx.strokeStyle = "#000000";
         ctx.lineWidth = 1.5;
         ctx.strokeRect(-boxW / 2, -boxH, boxW, boxH);
 
-        // 小尾巴
         ctx.beginPath();
         ctx.moveTo(-4, 0);
         ctx.lineTo(0, 5);
@@ -1239,11 +1240,9 @@
         ctx.strokeStyle = "#000000";
         ctx.stroke();
 
-        // 遮掉尾巴連接處的黑線
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(-3, -1.5, 6, 2);
 
-        // 文字
         ctx.fillStyle = "#000000";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -1345,7 +1344,6 @@
       function renderLoop() {
         animTimer += 0.04;
         dogBubbleTimer += 0.04;
-        horseBubbleTimer += 0.04;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -1356,16 +1354,7 @@
 
         ctx.save();
 
-        if (isZoomingScene) {
-          sceneZoomScale += (4.2 - sceneZoomScale) * 0.12;
-          const focusX = targetBarn ? w * targetBarn.xRatio : dogPos.x;
-          const focusY = horizonY - 20;
-          ctx.translate(w / 2, h / 2);
-          ctx.scale(sceneZoomScale, sceneZoomScale);
-          ctx.translate(-focusX, -focusY);
-        }
-
-        // ==================== 1. 天空與居中對稱像素雲 ====================
+        // ==================== 1. 天空與雲朵 ====================
         ctx.fillStyle = '#7b9cb0';
         ctx.fillRect(0, 0, w, horizonY);
 
@@ -1382,7 +1371,7 @@
         ctx.fillStyle = '#643818';
         ctx.fillRect(0, horizonY, w, 5);
 
-        // ==================== 3. 仙人掌 (手機版只留一個) ====================
+        // ==================== 3. 仙人掌 (手機版僅保留一個) ====================
         const propsToRender = isMobile 
           ? (ranchConfig.customProps || []).slice(0, 1) 
           : (ranchConfig.customProps || []);
@@ -1394,14 +1383,14 @@
           drawScreenshotCactus(px, py, pScale);
         });
 
-        // ==================== 4. 房子 (等比例放大適中) ====================
+        // ==================== 4. 房子 (等比例放大) ====================
         const barnBaseW = isMobile ? 96 : 138;
         barnsData.forEach((b, idx) => {
           const bx = w * b.xRatio;
           drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
         });
 
-        // ==================== 5. 狗與馬 (等比例放大、不溢框) ====================
+        // ==================== 5. 狗與馬 (手機等比例放大不溢框) ====================
         const dogScale = ((ranchConfig.characters.dog.scale || 130) / 100) * (isMobile ? 1.25 : 1.35);
         const horseScale = ((ranchConfig.characters.horse.scale || 115) / 100) * (isMobile ? 1.15 : 1.25);
 
@@ -1422,17 +1411,24 @@
         drawHorseWithHead(horsePos.x, horsePos.y, horseScale);
         drawGroundedDog(dogPos.x, dogPos.y, dogScale);
 
-        // ==================== 6. 對話框氣泡 (跟隨角色移動) ====================
-        // 小狗對話框：每隔10秒顯示3秒
-        const dogCycle = dogBubbleTimer % 10;
-        if (dogCycle >= 0 && dogCycle <= 3) {
-          drawPixelSpeechBubble(dogPos.x, dogPos.y - 48 * dogScale, "PONYO!!");
-        }
+        // ==================== 6. 小狗對話框 (每15秒淡入淡出顯示3秒，輪流交替) ====================
+        const cycleTime = 15;
+        const showDuration = 3.0;
+        const fadeTime = 0.4;
 
-        // 小馬對話框：每隔15秒顯示3秒
-        const horseCycle = horseBubbleTimer % 15;
-        if (horseCycle >= 0 && horseCycle <= 3) {
-          drawPixelSpeechBubble(horsePos.x + 10, horsePos.y - 56 * horseScale, "Saddle Up");
+        const currentCycle = dogBubbleTimer % cycleTime;
+        const cycleIndex = Math.floor(dogBubbleTimer / cycleTime);
+
+        if (currentCycle <= showDuration) {
+          let alpha = 1.0;
+          if (currentCycle < fadeTime) {
+            alpha = currentCycle / fadeTime;
+          } else if (currentCycle > showDuration - fadeTime) {
+            alpha = (showDuration - currentCycle) / fadeTime;
+          }
+
+          const bubbleText = (cycleIndex % 2 === 0) ? "PONYO!!" : "Saddle Up";
+          drawFadingSpeechBubble(dogPos.x, dogPos.y - 50 * dogScale, bubbleText, alpha);
         }
 
         ctx.restore();
