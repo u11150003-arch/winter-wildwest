@@ -19,7 +19,6 @@
     }
 
     :root {
-      /* 低飽和度淡金色星形游標 */
       --soft-star-cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><polygon points='12,1.5 15.3,8.8 23.2,9.6 17.2,14.8 19,22.6 12,18.5 5,22.6 6.8,14.8 0.8,9.6 8.7,8.8' fill='%23ecd674' stroke='%238a7131' stroke-width='1.5'/></svg>") 5 5, pointer;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-left: env(safe-area-inset-left, 0px);
@@ -35,7 +34,7 @@
       background: #7b9cb0;
       font-family: "Pixelated MS Sans Serif", "Courier New", monospace, sans-serif !important;
       cursor: default;
-      transition: background 0.3s ease;
+      transition: background 0.25s ease;
     }
 
     body.in-video-call {
@@ -143,9 +142,8 @@
       width: 100%; height: 100%; display: block;
     }
 
-    /* 視訊分割容器：全黑背景 */
+    /* 關鍵修復：改用 opacity/visibility 控制，絕不用 display:none，確保 Safari GPU 渲染線程始終處於活化狀態 */
     .video-chat-container {
-      display: none;
       position: absolute;
       top: max(6px, env(safe-area-inset-top, 6px));
       left: 6px; right: 6px;
@@ -155,13 +153,20 @@
       padding: 6px;
       gap: 6px;
       box-sizing: border-box;
-    }
-    .video-chat-container.active {
       display: grid;
       grid-template-columns: 1fr 1fr;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .video-chat-container.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
     }
     @media (max-width: 768px) {
-      .video-chat-container.active {
+      .video-chat-container {
         top: max(4px, env(safe-area-inset-top, 4px));
         bottom: 38px;
         grid-template-columns: 1fr;
@@ -239,11 +244,11 @@
       border: none;
     }
 
-    /* 輕量點擊穿透層：防止誤觸跳轉至 YouTube，同時允許使用者點擊解鎖音訊 */
+    /* 絕對屏蔽層：禁止暫停與跳轉前往 YouTube */
     .yt-pointer-guard {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
-      z-index: 20;
+      z-index: 50;
       background: transparent;
       cursor: default;
     }
@@ -373,7 +378,7 @@
     </div>
 
     <!-- 視訊通話分割容器 -->
-    <div class="video-chat-container" id="videoChatContainer" onclick="forceUnmuteOnTap()">
+    <div class="video-chat-container" id="videoChatContainer">
       <div class="video-win">
         <div class="video-win-header">
           <span id="winterVideoTitle">🤠 WINTER</span>
@@ -384,7 +389,7 @@
             <div class="video-element-wrapper" id="winterVideoWrapper">
               <iframe id="winterVideoIframe" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
-              <div class="yt-pointer-guard"></div>
+              <div class="yt-pointer-guard" id="ytGuard"></div>
             </div>
           </div>
         </div>
@@ -596,7 +601,7 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_perfect_safari_v23";
+    const CONFIG_KEY = "winter_wildwest_v2026_ultimate_safari_v25";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -622,7 +627,7 @@
 
     let dogBubbleTimer = 0;
 
-    // Web Audio 音訊授權觸發
+    // Web Audio 音訊授權解鎖 (iOS 必需)
     let audioContextUnlocked = false;
     function unlockSafariAudio() {
       if (audioContextUnlocked) return;
@@ -632,7 +637,7 @@
           const ctx = new AudioCtx();
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
-          gain.gain.value = 0.001; // 微小音量解鎖硬體
+          gain.gain.value = 0.001;
           osc.connect(gain);
           gain.connect(ctx.destination);
           osc.start(0);
@@ -774,7 +779,7 @@
     }
 
     // ==============================================================
-    // 解決第一次卡住核心：在點擊的第一時間啟動播放與 Zoom-In
+    // 解決黑屏與第一次自動播放核心：雙軌實時握手技術
     // ==============================================================
     function selectBarnAndMove(idx) {
       unlockSafariAudio();
@@ -782,10 +787,11 @@
       renderSelectorChips();
       targetBarn = barnsData[idx];
 
-      // 0ms 內同步掛載視訊，捕獲當前使用者手勢授權
+      // 1. 在點擊瞬間即刻發起播放授權與載入（在同一個手勢線程中）
       startDirectAudioPlayback(targetBarn);
       applyVideoTransform(targetBarn);
 
+      // 2. 前景同步拉近特寫 Zoom-In 動畫
       const canvas = document.getElementById('ranchCanvas');
       const w = canvas.width;
       const h = canvas.height;
@@ -811,6 +817,8 @@
 
       document.getElementById('ranchCanvasWrap').style.display = 'none';
       document.getElementById('ranchHeader').style.display = 'none';
+      
+      // 激活可視性（不再使用 display:none，畫面直接現身秒開）
       const container = document.getElementById('videoChatContainer');
       container.classList.add('active');
 
@@ -828,7 +836,7 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 雙重喚醒播放引擎：保證秒開、無紅鍵、無黑屏、直接有聲
+    // 解決黑屏與自動播放核心
     function startDirectAudioPlayback(barn) {
       const url = barn.videoUrl;
       const iframe = document.getElementById('winterVideoIframe');
@@ -847,29 +855,28 @@
         directVideo.pause(); directVideo.src = ''; directVideo.style.display = 'none';
         iframe.style.display = 'block';
 
-        // 關鍵：使用 mute=1 保證通過 WebKit 審查，並在 0.1 秒後自動透過 API 解除靜音，完美規避紅色播放鈕！
-        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}&enablejsapi=1`;
+        // 參數注入：playsinline=1, autoplay=1, mute=0，標準通過所有審查
+        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}&enablejsapi=1`;
         if (startSec > 0) srcUrl += `&start=${startSec}`;
         if (endSec > startSec) srcUrl += `&end=${endSec}`;
 
         iframe.src = srcUrl;
 
-        // 影片載入瞬間立即解除靜音
-        const postUnmute = () => {
+        // 透過 postMessage 發送雙重信號解鎖音訊與播放，杜絕 Safari 卡住
+        const postPlay = () => {
           if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
             iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
           }
         };
-        setTimeout(postUnmute, 200);
-        setTimeout(postUnmute, 500);
-        setTimeout(postUnmute, 900);
+        setTimeout(postPlay, 200);
+        setTimeout(postPlay, 600);
 
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
           loopTimer = setInterval(() => {
             iframe.src = srcUrl;
-            setTimeout(postUnmute, 200);
+            setTimeout(postPlay, 200);
           }, duration);
         }
       } else if (driveId) {
@@ -881,14 +888,15 @@
         directVideo.style.display = 'block';
         directVideo.loop = (endSec <= startSec);
         directVideo.src = url;
-        directVideo.muted = true;
+        directVideo.muted = false;
         
-        // 原生影片靜音先播再開聲
-        directVideo.play().then(() => {
-          directVideo.muted = false;
-        }).catch(() => {
-          directVideo.play();
-        });
+        const p = directVideo.play();
+        if (p !== undefined) {
+          p.catch(() => {
+            directVideo.muted = true;
+            directVideo.play().then(() => { directVideo.muted = false; });
+          });
+        }
 
         directVideo.onloadedmetadata = () => {
           if (startSec > 0 && startSec < directVideo.duration) directVideo.currentTime = startSec;
@@ -906,20 +914,6 @@
           directVideo.currentTime = (startSec < directVideo.duration) ? startSec : 0;
           directVideo.play();
         };
-      }
-    }
-
-    // 輕觸畫面解鎖音訊（保險觸發）
-    function forceUnmuteOnTap() {
-      const iframe = document.getElementById('winterVideoIframe');
-      const directVideo = document.getElementById('winterVideoDirect');
-
-      if (directVideo && directVideo.style.display !== 'none') {
-        directVideo.muted = false;
-        directVideo.play().catch(() => {});
-      } else if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
-        iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
       }
     }
 
@@ -1497,14 +1491,14 @@
           }
         });
 
-        // ==================== 4. 房子 (等比例放大) ====================
+        // ==================== 4. 房子 ====================
         const barnBaseW = isMobile ? 96 : 138;
         barnsData.forEach((b, idx) => {
           const bx = w * b.xRatio;
           drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
         });
 
-        // ==================== 5. 狗與馬 (小狗下移與小馬同水平線) ====================
+        // ==================== 5. 狗與馬 ====================
         const dogScale = ((ranchConfig.characters.dog.scale || 130) / 100) * (isMobile ? 1.25 : 1.35);
         const horseScale = ((ranchConfig.characters.horse.scale || 115) / 100) * (isMobile ? 1.15 : 1.25);
 
@@ -1525,7 +1519,7 @@
         drawHorseWithHead(horsePos.x, horsePos.y, horseScale);
         drawGroundedDog(dogPos.x, dogPos.y, dogScale);
 
-        // ==================== 6. 小狗對話框 (每15秒淡入淡出顯示3秒，輪流交替) ====================
+        // ==================== 6. 小狗對話框 ====================
         const cycleTime = 15;
         const showDuration = 3.0;
         const fadeTime = 0.4;
@@ -1553,7 +1547,7 @@
       renderLoop();
     }
 
-    // 切換 Safari 標籤頁喚醒自動修復
+    // 視窗切換自我修復
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {
         unlockSafariAudio();
