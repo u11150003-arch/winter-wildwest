@@ -10,6 +10,8 @@
   <meta property="og:image" content="https://lh3.googleusercontent.com/d/17WOfRelvxF9qJrmBwUpOuJGdgFaLj06o">
 
   <link rel="stylesheet" href="https://unpkg.com/98.css">
+  <!-- 引入 CD Player 相同的經典像素字型 -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * { 
       box-sizing: border-box; 
@@ -74,7 +76,7 @@
       bottom: var(--taskbar-h);
       display: flex; flex-direction: column;
       overflow: hidden;
-      background: #000;
+      background: #000000; /* 最頂部區域改為純黑 */
     }
 
     .ranch-header {
@@ -100,6 +102,31 @@
       text-shadow: 1px 1px 0px #000;
     }
 
+    /* 地板區域提示字：與 CD Player 相同字體與呼吸閃爍效果 */
+    .floor-prompt-text {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Press Start 2P', monospace !important;
+      font-size: 11px;
+      color: #000080;
+      text-shadow: 1px 1px 0px #ffffff;
+      text-align: center;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 15;
+      animation: retroBlink 1.4s infinite ease-in-out;
+    }
+    @media (max-width: 768px) {
+      .floor-prompt-text {
+        font-size: 9px;
+      }
+    }
+    @keyframes retroBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+
     .ranch-canvas-wrap {
       flex: 1; width: 100%; height: 100%;
       position: relative;
@@ -108,7 +135,7 @@
       width: 100%; height: 100%; display: block;
     }
 
-    /* 視訊分割容器：底色改為深黑 */
+    /* 視訊分割容器：底色純黑 */
     .video-chat-container {
       display: none;
       position: absolute;
@@ -186,16 +213,21 @@
       transform-origin: center center;
     }
     
-    .video-element-wrapper iframe, #ytPlayerDiv {
+    .video-element-wrapper iframe, .video-element-wrapper video {
       width: 100%;
       height: 100%;
       border: none;
-    }
-    .video-element-wrapper video {
-      width: 100%;
-      height: 100%;
       object-fit: contain;
-      border: none;
+    }
+
+    /* 關鍵：透明點擊屏蔽層，防止使用者暫停影片或點到 YouTube 連結前往外部 */
+    .yt-pointer-guard {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 20;
+      background: transparent;
+      pointer-events: auto !important;
+      cursor: default;
     }
 
     .mirror-cam { transform: scaleX(-1); width: 100%; height: 100%; object-fit: cover; }
@@ -316,13 +348,14 @@
       <p>CHOOSE A HOUSE TO ENTER VIDEO CALL</p>
     </div>
 
-    <!-- 西部荒野 Canvas -->
+    <!-- 西部荒野 Canvas 與 呼吸閃爍提示字 -->
     <div class="ranch-canvas-wrap" id="ranchCanvasWrap">
       <canvas id="ranchCanvas"></canvas>
+      <div class="floor-prompt-text" id="floorPrompt">點擊畫面開啟視訊通話 (Click to Enter)</div>
     </div>
 
     <!-- 視訊通話分割容器 -->
-    <div class="video-chat-container" id="videoChatContainer" onclick="ensureAudioPlaying()">
+    <div class="video-chat-container" id="videoChatContainer">
       <div class="video-win">
         <div class="video-win-header">
           <span id="winterVideoTitle">🤠 WINTER</span>
@@ -331,9 +364,10 @@
         <div class="video-win-body">
           <div class="video-viewport-box">
             <div class="video-element-wrapper" id="winterVideoWrapper">
-              <div id="ytPlayerDiv"></div>
-              <iframe id="winterVideoIframe" style="display:none;" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-              <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline controls loop></video>
+              <iframe id="winterVideoIframe" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+              <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
+              <!-- 遮罩層：阻止暫停與前往 YouTube -->
+              <div class="yt-pointer-guard"></div>
             </div>
           </div>
         </div>
@@ -458,7 +492,6 @@
           💿 <strong>2. 前往 WINTER CD PLAYER</strong>
         </a>
       </li>
-      <!-- 已修正文字為：返回西部荒野全景 -->
       <li onclick="returnToRanchMap(); toggleStartMenu(event);">
         🐎 <strong>3. 返回西部荒野全景</strong>
       </li>
@@ -481,9 +514,6 @@
       <a href="https://www.instagram.com/winter_tst" target="_blank">Copyright © : winter_tst</a>
     </div>
   </div>
-
-  <!-- 載入 YouTube 官方 IFrame API -->
-  <script src="https://www.youtube.com/iframe_api"></script>
 
   <script>
     const ADMIN_PASSWORD = "admin";
@@ -549,7 +579,7 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_perfect_fix_v12";
+    const CONFIG_KEY = "winter_wildwest_v2026_restored_v13";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -574,14 +604,6 @@
     let loopTimer = null;
 
     let dogBubbleTimer = 0;
-
-    // YouTube IFrame API 物件
-    let ytPlayer = null;
-    let isYtApiReady = false;
-
-    window.onYouTubeIframeAPIReady = function() {
-      isYtApiReady = true;
-    };
 
     const imageCache = {};
     function formatDriveUrl(url) {
@@ -704,16 +726,15 @@
       renderSelectorChips();
     }
 
-    // 雙軌執行：點擊當下立馬觸發音訊/播放解鎖，同時執行 Zoom-in 特寫動畫
+    // 雙軌平行方案：保留特寫 Zoom-In 動畫並在點擊手勢當下觸發播放
     function selectBarnAndMove(idx) {
       activeBarnIndex = idx;
       renderSelectorChips();
       targetBarn = barnsData[idx];
 
-      // 1. 利用使用者點擊事件立即解鎖媒體與有聲播放
-      preloadAndPlayVideoSound(targetBarn);
+      // 原生指令立即啟動影片載入
+      playWinterVideo(targetBarn);
 
-      // 2. 前景展開特寫與小狗鑽門
       const canvas = document.getElementById('ranchCanvas');
       const w = canvas.width;
       const h = canvas.height;
@@ -728,8 +749,8 @@
         isZoomingScene = true;
         setTimeout(() => {
           enterVideoChat(targetBarn);
-        }, 650);
-      }, 550);
+        }, 700);
+      }, 600);
     }
 
     function enterVideoChat(barn) {
@@ -753,12 +774,11 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 透過 YouTube IFrame API 精確掌控播放，克服 Safari 紅色按鈕與暫停圖示
-    function preloadAndPlayVideoSound(barn) {
+    // 原生乾淨播放指令：修復 Safari 黑屏並確保自動播放
+    function playWinterVideo(barn) {
       const url = barn.videoUrl;
       const iframe = document.getElementById('winterVideoIframe');
       const directVideo = document.getElementById('winterVideoDirect');
-      const ytDiv = document.getElementById('ytPlayerDiv');
       const adj = barn.adjust || { scale: 100, x: 50, y: 50, start: 0, end: 0 };
       const startSec = parseInt(adj.start, 10) || 0;
       const endSec = parseInt(adj.end, 10) || 0;
@@ -771,71 +791,26 @@
 
       if (ytId) {
         directVideo.pause(); directVideo.src = ''; directVideo.style.display = 'none';
-        iframe.style.display = 'none';
-        ytDiv.style.display = 'block';
+        iframe.style.display = 'block';
 
-        if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-          ytPlayer.loadVideoById({
-            videoId: ytId,
-            startSeconds: startSec
-          });
-          ytPlayer.unMute();
-          ytPlayer.playVideo();
-        } else if (window.YT && window.YT.Player) {
-          ytPlayer = new YT.Player('ytPlayerDiv', {
-            videoId: ytId,
-            playerVars: {
-              autoplay: 1,
-              controls: 0,
-              rel: 0,
-              modestbranding: 1,
-              playsinline: 1,
-              start: startSec,
-              iv_load_policy: 3,
-              fs: 0,
-              disablekb: 1
-            },
-            events: {
-              onReady: function(event) {
-                event.target.unMute();
-                event.target.playVideo();
-              },
-              onStateChange: function(event) {
-                if (event.data === YT.PlayerState.ENDED) {
-                  event.target.seekTo(startSec);
-                  event.target.playVideo();
-                }
-              }
-            }
-          });
-        } else {
-          // 備用 iframe 載入
-          iframe.style.display = 'block';
-          ytDiv.style.display = 'none';
-          let params = `autoplay=1&mute=0&playsinline=1&loop=1&playlist=${ytId}&controls=0&rel=0&iv_load_policy=3&modestbranding=1&disablekb=1&fs=0&enablejsapi=1`;
-          if (startSec > 0) params += `&start=${startSec}`;
-          if (endSec > startSec) params += `&end=${endSec}`;
-          iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?${params}`;
-        }
+        // 徹底修正 Safari 播放參數：去除過多干擾標籤，以標準 YouTube 嵌入確保秒開
+        let params = `autoplay=1&mute=0&loop=1&playlist=${ytId}&controls=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1`;
+        if (startSec > 0) params += `&start=${startSec}`;
+        if (endSec > startSec) params += `&end=${endSec}`;
+
+        iframe.src = `https://www.youtube.com/embed/${ytId}?${params}`;
 
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
           loopTimer = setInterval(() => {
-            if (ytPlayer && ytPlayer.seekTo) {
-              ytPlayer.seekTo(startSec);
-              ytPlayer.playVideo();
-            }
+            iframe.src = `https://www.youtube.com/embed/${ytId}?${params}`;
           }, duration);
         }
       } else if (driveId) {
-        if (ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
-        ytDiv.style.display = 'none';
         directVideo.pause(); directVideo.src = ''; directVideo.style.display = 'none';
         iframe.style.display = 'block';
         iframe.src = `https://drive.google.com/file/d/${driveId}/preview`;
       } else {
-        if (ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
-        ytDiv.style.display = 'none';
         iframe.src = ''; iframe.style.display = 'none';
         directVideo.style.display = 'block';
         directVideo.loop = (endSec <= startSec);
@@ -871,23 +846,8 @@
       }
     }
 
-    function ensureAudioPlaying() {
-      if (ytPlayer && ytPlayer.unMute) {
-        ytPlayer.unMute();
-        ytPlayer.playVideo();
-      }
-      const directVideo = document.getElementById('winterVideoDirect');
-      if (directVideo && directVideo.style.display !== 'none') {
-        directVideo.muted = false;
-        directVideo.play().catch(() => {});
-      }
-    }
-
     function stopWinterVideo() {
       if (loopTimer) clearInterval(loopTimer);
-      if (ytPlayer && typeof ytPlayer.stopVideo === 'function') {
-        ytPlayer.stopVideo();
-      }
       const iframe = document.getElementById('winterVideoIframe');
       const directVideo = document.getElementById('winterVideoDirect');
       if (iframe) iframe.src = '';
@@ -943,7 +903,7 @@
       saveRanchState();
       closeModal('adjustModal');
       alert("✅ 視訊設定已儲存！");
-      preloadAndPlayVideoSound(barnsData[activeBarnIndex]);
+      playWinterVideo(barnsData[activeBarnIndex]);
     }
 
     function openEnvironmentModal() {
@@ -1090,7 +1050,7 @@
 
       saveRanchState();
       if (document.getElementById('videoChatContainer').classList.contains('active')) {
-        preloadAndPlayVideoSound(b);
+        playWinterVideo(b);
       }
     }
 
@@ -1124,8 +1084,13 @@
 
         const horizonY = canvas.height * (ranchConfig.environment.horizonRatio || 0.67);
 
+        // 動態更新提示文字在地面垂直正中央
+        const promptEl = document.getElementById('floorPrompt');
+        if (promptEl) {
+          promptEl.style.top = (horizonY + (canvas.height - horizonY) * 0.42) + 'px';
+        }
+
         if (!isDogHeadingToBarn) {
-          // 狗位置微幅下移 (+3px)，與馬站在同一條地平線
           dogPos.x = dogPos.targetX = canvas.width * 0.36;
           dogPos.y = dogPos.targetY = horizonY + 3;
           horsePos.x = horsePos.targetX = canvas.width * 0.68;
@@ -1255,11 +1220,10 @@
         ctx.restore();
       }
 
-      // 仙人掌寬度縮窄，絕不碰觸房屋
       function drawScreenshotCactus(x, y, scale) {
         ctx.save();
         ctx.translate(x, y);
-        ctx.scale(scale * 0.82, scale); // 寬度比例再收窄
+        ctx.scale(scale * 0.82, scale);
 
         ctx.fillStyle = '#2b6b55';
         ctx.fillRect(-3.5, -42, 7, 42);
@@ -1436,21 +1400,7 @@
         ctx.fillStyle = '#643818';
         ctx.fillRect(0, horizonY, w, 5);
 
-        // 地板提示文字：「點擊房屋開啟視訊通話」
-        ctx.save();
-        ctx.font = isMobile ? "bold 13px 'Pixelated MS Sans Serif', sans-serif" : "bold 15px 'Pixelated MS Sans Serif', sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        const promptY = horizonY + (h - horizonY) * 0.42;
-        // 陰影
-        ctx.fillStyle = "#4a2c14";
-        ctx.fillText("點擊房屋開啟視訊通話", w / 2 + 1.5, promptY + 1.5);
-        // 主字體
-        ctx.fillStyle = "#fff4d0";
-        ctx.fillText("點擊房屋開啟視訊通話", w / 2, promptY);
-        ctx.restore();
-
-        // ==================== 3. 仙人掌 (手機版保留一個，寬度收窄) ====================
+        // ==================== 3. 仙人掌 (最底層，寬度收窄) ====================
         const propsToRender = isMobile 
           ? (ranchConfig.customProps || []).slice(0, 1) 
           : (ranchConfig.customProps || []);
@@ -1478,7 +1428,7 @@
           drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
         });
 
-        // ==================== 5. 狗與馬 (小狗下移與馬完全同水平線) ====================
+        // ==================== 5. 狗與馬 (小狗下移與小馬同水平線) ====================
         const dogScale = ((ranchConfig.characters.dog.scale || 130) / 100) * (isMobile ? 1.25 : 1.35);
         const horseScale = ((ranchConfig.characters.horse.scale || 115) / 100) * (isMobile ? 1.15 : 1.25);
 
