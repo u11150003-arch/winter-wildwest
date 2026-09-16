@@ -106,14 +106,14 @@
       text-shadow: 1px 1px 0px #000;
     }
 
-    /* 地板提示文字：復古點陣中文字體、亮黃色、立體陰影、呼吸閃爍 */
+    /* 地板提示文字：復古點陣中文、亮黃色、立體陰影、呼吸閃爍 */
     .floor-prompt-text {
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
       font-family: "Pixelated MS Sans Serif", "MingLiU", "PMingLiU", "Courier New", monospace !important;
       font-weight: bold;
-      font-size: 18px;
+      font-size: 17px;
       letter-spacing: 2px;
       color: #ffe066 !important;
       text-shadow: 2px 2px 0px #3a1e0b, -1px -1px 0px #3a1e0b, 1px -1px 0px #3a1e0b, -1px 1px 0px #3a1e0b, 0px 2px 4px rgba(0,0,0,0.6);
@@ -125,7 +125,7 @@
     }
     @media (max-width: 768px) {
       .floor-prompt-text {
-        font-size: 14px;
+        font-size: 13.5px;
         letter-spacing: 1.5px;
       }
     }
@@ -236,7 +236,7 @@
       left: 50% !important;
       transform: translate(-50%, -50%) !important;
       border: none !important;
-      display: none; /* 預載時隱藏，由程式激活顯示 */
+      display: none;
     }
     .video-element-wrapper iframe.active-video {
       display: block !important;
@@ -248,13 +248,27 @@
       border: none;
     }
 
-    /* 絕對屏蔽層：禁止暫停與跳轉前往 YouTube */
+    /* 絕對屏蔽層 + 連線中動畫遮罩 */
     .yt-pointer-guard {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       z-index: 50;
       background: transparent;
       cursor: default;
+      transition: background 0.4s ease;
+    }
+    .yt-pointer-guard.connecting {
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .yt-pointer-guard.connecting::after {
+      content: "⭐️ 連線中...";
+      color: #ffe9c2;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 2px;
     }
 
     .mirror-cam { transform: scaleX(-1); width: 100%; height: 100%; object-fit: cover; }
@@ -372,13 +386,14 @@
   <div class="app-container">
     <div class="ranch-header" id="ranchHeader">
       <h2>WINTER WILDWEST</h2>
-      <p>CHOOSE A HOUSE TO ENTER VIDEO CALL</p>
+      <!-- 修正 1：英文副標更換為懸念感文案 -->
+      <p>KNOCK AND SEE WHO ANSWERS</p>
     </div>
 
-    <!-- 西部荒野 Canvas 與 復古中文字 -->
+    <!-- 西部荒野 Canvas 與 修正 2：懸念感地板提示語 -->
     <div class="ranch-canvas-wrap" id="ranchCanvasWrap">
       <canvas id="ranchCanvas"></canvas>
-      <div class="floor-prompt-text" id="floorPrompt">點擊房屋開啟視訊通話</div>
+      <div class="floor-prompt-text" id="floorPrompt">推開木門，看看誰在等你 🚪</div>
     </div>
 
     <!-- 視訊通話分割容器 -->
@@ -390,11 +405,11 @@
         </div>
         <div class="video-win-body">
           <div class="video-viewport-box">
-            <!-- 預載入三座專屬視訊插槽，不再重複銷毀 iframe，徹底根除 Safari 拒載與黑屏 -->
+            <!-- 預載入三座實體視訊插槽，名稱已更名為 WINTER, KMJ, PONYO -->
             <div class="video-element-wrapper" id="winterVideoWrapper">
-              <iframe id="iframe_barn_0101" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-              <iframe id="iframe_barn_1117" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-              <iframe id="iframe_barn_0618" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+              <iframe id="iframe_barn_winter" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+              <iframe id="iframe_barn_kmj" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+              <iframe id="iframe_barn_ponyo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
               <div class="yt-pointer-guard" id="ytGuard"></div>
             </div>
@@ -548,6 +563,7 @@
     const ADMIN_PASSWORD = "admin";
     let isAdmin = false;
 
+    // 房舍正式更名為 WINTER, KMJ, PONYO
     const RANCH_MASTER_CONFIG = {
       "environment": {
         "horizonRatio": 0.67
@@ -582,24 +598,24 @@
       ],
       "barns": [
         {
-          "id": "barn_0101",
-          "name": "WINTER0101",
+          "id": "barn_winter",
+          "name": "WINTER",
           "customImg": "",
           "xRatio": 0.18,
           "videoUrl": "https://youtu.be/dVhNMMejAtA?si=3hNsInSYm_CyfAcF",
           "adjust": { "scale": 146, "x": 50, "y": 50, "start": 0, "end": 0 }
         },
         {
-          "id": "barn_1117",
-          "name": "WINTER1117",
+          "id": "barn_kmj",
+          "name": "KMJ",
           "customImg": "",
           "xRatio": 0.50,
           "videoUrl": "https://youtu.be/Nxybqp22WNI?si=BnwmB_4uMEmIqO1a",
           "adjust": { "scale": 146, "x": 44, "y": 50, "start": 0, "end": 0 }
         },
         {
-          "id": "barn_0618",
-          "name": "PONYO0618",
+          "id": "barn_ponyo",
+          "name": "PONYO",
           "customImg": "",
           "xRatio": 0.82,
           "videoUrl": "https://youtu.be/nOA1qS4AaiQ?si=aNod6kn17hyqYDTK",
@@ -608,7 +624,8 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_bridge_final_v30";
+    // 升級快取版本，確保所有使用者瀏覽器立即加載新更名與新遮罩
+    const CONFIG_KEY = "winter_wildwest_v2026_claude_perfect_v35";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -634,7 +651,6 @@
 
     let dogBubbleTimer = 0;
 
-    // Web Audio 授權鎖
     let audioContextUnlocked = false;
     function unlockSafariAudio() {
       if (audioContextUnlocked) return;
@@ -749,6 +765,7 @@
       }
     }
 
+    // 招牌與按鍵名稱更新：WINTER, KMJ, PONYO
     function renderSelectorChips() {
       const bar = document.getElementById('barnSelectorBar');
       if (!bar) return;
@@ -767,9 +784,6 @@
       });
     }
 
-    // ==============================================================
-    // 預載入三座實體視訊插槽：保證首次點擊不必重建 DOM，秒速開播
-    // ==============================================================
     function preloadAllBarnIframes() {
       barnsData.forEach(b => {
         const iframe = document.getElementById(`iframe_${b.id}`);
@@ -806,20 +820,16 @@
       renderSelectorChips();
     }
 
-    // ==============================================================
-    // 0 延遲原生手勢轉移：在點擊事件的第一個微秒向 YouTube 傳遞有聲播放授權
-    // ==============================================================
     function selectBarnAndMove(idx) {
       unlockSafariAudio();
       activeBarnIndex = idx;
       renderSelectorChips();
       targetBarn = barnsData[idx];
 
-      // 1. 在點擊的瞬間直接喚醒目標 iframe，絕無延遲與握手超時！
+      // 點擊當下即時啟動目標視訊
       activateAndPlayBarnVideo(targetBarn);
       applyVideoTransform(targetBarn);
 
-      // 2. 前景展開拉近特寫 Zoom-In 與鑽門演出
       const canvas = document.getElementById('ranchCanvas');
       const w = canvas.width;
       const h = canvas.height;
@@ -863,11 +873,19 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 啟動專屬實體視訊插槽：有聲自動播放
+    // 啟動專屬實體視訊插槽 + 修正 4：連線中遮罩防止快轉閃爍
     function activateAndPlayBarnVideo(barn) {
       if (loopTimer) clearInterval(loopTimer);
 
-      // 隱藏非當前的視訊
+      // 修正 4：播放前蓋住畫面，等 YouTube 內部跳轉到指定秒數完成後再掀開 (1.5秒)
+      const ytGuard = document.getElementById('ytGuard');
+      if (ytGuard) {
+        ytGuard.classList.add('connecting');
+        clearTimeout(ytGuard._hideTimer);
+        ytGuard._hideTimer = setTimeout(() => ytGuard.classList.remove('connecting'), 1500);
+      }
+
+      // 隱藏非當前視訊
       barnsData.forEach(b => {
         const el = document.getElementById(`iframe_${b.id}`);
         if (el) {
@@ -890,7 +908,6 @@
         directVideo.pause(); directVideo.style.display = 'none';
         activeIframe.classList.add('active-video');
 
-        // 確保 iframe 具備正確播放網址
         let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}&enablejsapi=1`;
         if (startSec > 0) srcUrl += `&start=${startSec}`;
         if (endSec > startSec) srcUrl += `&end=${endSec}`;
@@ -899,7 +916,6 @@
           activeIframe.src = srcUrl;
         }
 
-        // 即刻送出有聲播放指令
         const sendPlay = () => {
           if (activeIframe.contentWindow) {
             activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
@@ -1255,6 +1271,7 @@
         ctx.restore();
       }
 
+      // 木屋招牌繪製：WINTER, KMJ, PONYO
       function drawLowSatBarn(x, y, width, title, isSelected, customImgUrl) {
         const h = width * 0.92;
         ctx.save();
@@ -1304,6 +1321,7 @@
           ctx.fillStyle = '#170c0a';
           ctx.fillRect(-doorW/2, -doorH, doorW, doorH);
 
+          // 招牌木板
           ctx.fillStyle = '#b38865';
           ctx.fillRect(-width * 0.44, -h + 6, width * 0.88, 18);
           ctx.strokeStyle = '#5a3d28';
@@ -1311,7 +1329,7 @@
           ctx.strokeRect(-width * 0.44, -h + 6, width * 0.88, 18);
 
           ctx.fillStyle = '#2d180d';
-          ctx.font = 'bold 9px monospace';
+          ctx.font = 'bold 10px monospace';
           ctx.textAlign = 'center';
           ctx.fillText(title, 0, -h + 18);
         }
@@ -1519,14 +1537,14 @@
           }
         });
 
-        // ==================== 4. 房子 ====================
+        // ==================== 4. 房子 (招牌已更名為 WINTER, KMJ, PONYO) ====================
         const barnBaseW = isMobile ? 96 : 138;
         barnsData.forEach((b, idx) => {
           const bx = w * b.xRatio;
           drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
         });
 
-        // ==================== 5. 狗與馬 (小狗下移與小馬同水平線) ====================
+        // ==================== 5. 狗與馬 ====================
         const dogScale = ((ranchConfig.characters.dog.scale || 130) / 100) * (isMobile ? 1.25 : 1.35);
         const horseScale = ((ranchConfig.characters.horse.scale || 115) / 100) * (isMobile ? 1.15 : 1.25);
 
@@ -1547,7 +1565,7 @@
         drawHorseWithHead(horsePos.x, horsePos.y, horseScale);
         drawGroundedDog(dogPos.x, dogPos.y, dogScale);
 
-        // ==================== 6. 小狗對話框 (每15秒淡入淡出顯示3秒，輪流交替) ====================
+        // ==================== 6. 小狗對話框 ====================
         const cycleTime = 15;
         const showDuration = 3.0;
         const fadeTime = 0.4;
@@ -1606,4 +1624,3 @@
   </script>
 </body>
 </html>
-
