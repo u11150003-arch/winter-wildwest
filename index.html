@@ -11,6 +11,8 @@
   <meta property="og:image" content="https://lh3.googleusercontent.com/d/17WOfRelvxF9qJrmBwUpOuJGdgFaLj06o">
 
   <link rel="stylesheet" href="https://unpkg.com/98.css">
+  <!-- 引入像素字型 -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * { 
       box-sizing: border-box; 
@@ -27,6 +29,7 @@
       --taskbar-h: calc(38px + var(--safe-bottom));
     }
 
+    /* 預設頂部為天空藍，進入視訊後切為純黑 */
     html, body {
       margin: 0; padding: 0;
       width: 100vw; height: 100vh;
@@ -221,7 +224,7 @@
       transform-origin: center center;
     }
     
-    /* 裁剪技術：徹底消除 YouTube 介面與黑線 */
+    /* 裁切外推：將頂部創作者名與 YouTube 控制項移至螢幕可視區外 */
     .video-element-wrapper iframe {
       position: absolute;
       width: 138% !important;
@@ -238,7 +241,7 @@
       border: none;
     }
 
-    /* 絕對屏蔽層：禁止使用者暫停、禁止跳轉至 YouTube */
+    /* 絕對屏蔽層：禁止暫停與跳轉前往 YouTube */
     .yt-pointer-guard {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -384,7 +387,7 @@
             <div class="video-element-wrapper" id="winterVideoWrapper">
               <iframe id="winterVideoIframe" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
-              <!-- 雙層絕對保護層：防暫停、防跳轉至 YouTube、杜絕紅色按鈕殘留 -->
+              <!-- 遮罩層：禁止暫停與跳轉 -->
               <div class="yt-pointer-guard" id="ytGuard"></div>
             </div>
           </div>
@@ -597,7 +600,7 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_super_sound_v18";
+    const CONFIG_KEY = "winter_wildwest_v2026_gesture_sync_v20";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -749,16 +752,19 @@
       renderSelectorChips();
     }
 
-    // 關鍵：在使用者點擊的同一個 Call Stack 中完成音訊激活與播放加載
+    // ==============================================================
+    // 關鍵突破：0 秒內在同一點擊手勢棧中立即掛載有聲影片，同時啟動 Zoom-In
+    // ==============================================================
     function selectBarnAndMove(idx) {
       activeBarnIndex = idx;
       renderSelectorChips();
       targetBarn = barnsData[idx];
 
-      // 1. 同步啟動有聲影片
+      // 步驟 1：在此點擊事件的瞬間直接加載並播放（絕不延遲，100% 抓住 Safari 授權窗口）
       playWinterVideoDirectWithSound(targetBarn);
+      applyVideoTransform(targetBarn);
 
-      // 2. 啟動平滑拉近與鑽門
+      // 步驟 2：前景同步展開平滑特寫鏡頭 Zoom-in 與小狗鑽門
       const canvas = document.getElementById('ranchCanvas');
       const w = canvas.width;
       const h = canvas.height;
@@ -771,10 +777,11 @@
 
       setTimeout(() => {
         isZoomingScene = true;
+        // 0.6 秒後無縫平順接入已經在有聲播放的視訊畫面！
         setTimeout(() => {
           enterVideoChat(targetBarn);
-        }, 700);
-      }, 600);
+        }, 600);
+      }, 550);
     }
 
     function enterVideoChat(barn) {
@@ -788,7 +795,6 @@
       container.classList.add('active');
 
       document.getElementById('winterVideoTitle').innerText = `🤠 WINTER [${barn.name}]`;
-      applyVideoTransform(barn);
       initUserWebcam();
     }
 
@@ -802,7 +808,7 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 極速有聲播放引擎：直接穿透 Safari 限制，絕不露出紅色播放鍵與暫停圖示
+    // 核心有聲播放機制：完全消滅紅色播放鍵與黑屏
     function playWinterVideoDirectWithSound(barn) {
       const url = barn.videoUrl;
       const iframe = document.getElementById('winterVideoIframe');
@@ -821,29 +827,28 @@
         directVideo.pause(); directVideo.src = ''; directVideo.style.display = 'none';
         iframe.style.display = 'block';
 
-        // 參數注入：mute=0, autoplay=1, playsinline=1, controls=0
-        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}&enablejsapi=1`;
+        // 參數：autoplay=1&mute=0&playsinline=1&controls=0&loop=1
+        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
         if (startSec > 0) srcUrl += `&start=${startSec}`;
         if (endSec > startSec) srcUrl += `&end=${endSec}`;
 
         iframe.src = srcUrl;
 
-        // 連續發送信號確保解除暫停與音訊限制
-        const forcePlay = () => {
+        // 訊號補強，確保有聲播放暢行無阻
+        const triggerUnmutePlay = () => {
           if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
             iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
           }
         };
-        setTimeout(forcePlay, 200);
-        setTimeout(forcePlay, 600);
-        setTimeout(forcePlay, 1200);
+        setTimeout(triggerUnmutePlay, 300);
+        setTimeout(triggerUnmutePlay, 800);
 
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
           loopTimer = setInterval(() => {
             iframe.src = srcUrl;
-            setTimeout(forcePlay, 200);
+            setTimeout(triggerUnmutePlay, 300);
           }, duration);
         }
       } else if (driveId) {
