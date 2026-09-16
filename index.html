@@ -895,7 +895,7 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 連線遮罩秒數改為 4.5 秒（4500ms），精準掩蓋跳轉與暫停鍵
+    // 連線遮罩秒數改為 4.6 秒（4600ms），精準掩蓋跳轉與暫停鍵
     function activateAndPlayBarnVideo(barn) {
       if (loopTimer) clearInterval(loopTimer);
 
@@ -946,12 +946,12 @@
         setTimeout(sendPlay, 800);
         setTimeout(sendPlay, 2200);
 
-        // 遮罩改為 4.5 秒 (4500ms)，確保跳轉結束後順暢揭幕
+        // 遮罩改為 4.6 秒 (4600ms)，確保跳轉結束後順暢揭幕
         if (shield) {
           shield._hideTimer = setTimeout(() => {
             sendPlay();
             shield.classList.remove('active');
-          }, 4500);
+          }, 4600);
         }
 
         if (endSec > startSec) {
