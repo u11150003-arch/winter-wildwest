@@ -262,7 +262,7 @@
       border: none;
     }
 
-    /* 統一大小連線中遮罩：持續4.8秒 */
+    /* 統一大小連線中遮罩：持續5.0秒 */
     .fixed-connecting-shield {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -438,7 +438,7 @@
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
               <div class="yt-pointer-guard"></div>
             </div>
-            <!-- 遮罩時間改為 4.8 秒 (4800ms) -->
+            <!-- 遮罩時間設定為 5 秒 -->
             <div class="fixed-connecting-shield" id="connectingShield">⭐️ 連線中...</div>
           </div>
         </div>
@@ -654,8 +654,8 @@
       ]
     };
 
-    // 升級版本快取至 4.8 秒版本
-    const CONFIG_KEY = "winter_wildwest_v2026_pponyo_4800ms_v80";
+    // 升級版本快取至 5 秒重播版本
+    const CONFIG_KEY = "winter_wildwest_v2026_pponyo_5000ms_reset_v90";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -792,7 +792,6 @@
       }
     }
 
-    // 按鍵標籤：Pponyo 採用與其他英文一致的 Pixelated MS Sans Serif
     function renderSelectorChips() {
       const bar = document.getElementById('barnSelectorBar');
       if (!bar) return;
@@ -819,7 +818,7 @@
         if (ytId) {
           const adj = b.adjust || { start: 0, end: 0 };
           const startSec = parseInt(adj.start, 10) || 0;
-          let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=0&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}&enablejsapi=1`;
+          let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=0&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1`;
           if (startSec > 0) srcUrl += `&start=${startSec}`;
           if (!iframe.src || iframe.src === 'about:blank') {
             iframe.src = srcUrl;
@@ -899,16 +898,19 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 遮罩時間設定為 4.8 秒（4800ms）
+    // ==============================================================
+    // 核心播放引擎：5 秒連線遮罩 + 每次點擊/切換皆重新開始 + 播畢自動拉起 5 秒遮罩重播
+    // ==============================================================
     function activateAndPlayBarnVideo(barn) {
       if (loopTimer) clearInterval(loopTimer);
 
       const shield = document.getElementById('connectingShield');
       if (shield) {
-        shield.classList.add('active');
+        shield.classList.add('active'); // 立即拉起純黑連線遮罩
         clearTimeout(shield._hideTimer);
       }
 
+      // 暫停並隱藏其他非當前視訊
       barnsData.forEach(b => {
         const el = document.getElementById(`iframe_${b.id}`);
         if (el) {
@@ -931,54 +933,65 @@
         directVideo.pause(); directVideo.style.display = 'none';
         activeIframe.classList.add('active-video');
 
-        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}&enablejsapi=1`;
+        // 確保 iframe 具備正確參數
+        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1`;
         if (startSec > 0) srcUrl += `&start=${startSec}`;
-        if (endSec > startSec) srcUrl += `&end=${endSec}`;
 
         if (!activeIframe.src || activeIframe.src.indexOf(ytId) === -1) {
           activeIframe.src = srcUrl;
         }
 
-        const sendPlay = () => {
+        // 強制歸零／回到設定的起始秒數重新播放，不接續上次進度
+        const restartFromBeginning = () => {
           if (activeIframe.contentWindow) {
+            activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [startSec, true] }), '*');
             activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
             activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
           }
         };
-        sendPlay();
-        setTimeout(sendPlay, 250);
-        setTimeout(sendPlay, 800);
-        setTimeout(sendPlay, 2200);
 
-        // 遮罩精準設定為 4.8 秒 (4800ms)
+        restartFromBeginning();
+        setTimeout(restartFromBeginning, 300);
+        setTimeout(restartFromBeginning, 1000);
+        setTimeout(restartFromBeginning, 2500);
+
+        // 遮罩時間設定為 5 秒（5000ms），時間到後順暢揭幕
         if (shield) {
           shield._hideTimer = setTimeout(() => {
-            sendPlay();
+            restartFromBeginning();
             shield.classList.remove('active');
-          }, 4800);
+          }, 5000);
         }
 
+        // 當自訂了結束秒數時，播放完畢再次觸發 5 秒遮罩並從頭重播
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
           loopTimer = setInterval(() => {
-            if (activeIframe.contentWindow) {
-              activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [startSec, true] }), '*');
-              activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+            // 播放完畢：再次拉起 5 秒遮罩
+            if (shield) {
+              shield.classList.add('active');
+              clearTimeout(shield._hideTimer);
+              shield._hideTimer = setTimeout(() => {
+                restartFromBeginning();
+                shield.classList.remove('active');
+              }, 5000);
             }
-          }, duration);
+            restartFromBeginning();
+          }, duration + 5000); // 包含遮罩的循環週期
         }
       } else if (driveId && activeIframe) {
         directVideo.pause(); directVideo.style.display = 'none';
         activeIframe.classList.add('active-video');
         activeIframe.src = `https://drive.google.com/file/d/${driveId}/preview`;
         if (shield) {
-          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 1500);
+          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 5000);
         }
       } else {
         if (activeIframe) activeIframe.classList.remove('active-video');
         directVideo.style.display = 'block';
-        directVideo.loop = (endSec <= startSec);
+        directVideo.loop = false;
         directVideo.src = barn.videoUrl;
+        directVideo.currentTime = startSec; // 重置起點
         directVideo.muted = false;
         
         const p = directVideo.play();
@@ -988,11 +1001,59 @@
             directVideo.play().then(() => { directVideo.muted = false; });
           });
         }
+
+        // 直接播放影片結束時，拉起 5 秒遮罩並重頭銜接
+        directVideo.onended = () => {
+          if (shield) {
+            shield.classList.add('active');
+            clearTimeout(shield._hideTimer);
+            shield._hideTimer = setTimeout(() => {
+              directVideo.currentTime = startSec;
+              directVideo.play();
+              shield.classList.remove('active');
+            }, 5000);
+          } else {
+            directVideo.currentTime = startSec;
+            directVideo.play();
+          }
+        };
+
         if (shield) {
-          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 1200);
+          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 5000);
         }
       }
     }
+
+    // 監聽 YouTube 原生播畢信號：當整段影片自然播完時，自動拉起 5 秒遮罩並重頭銜接
+    window.addEventListener('message', (event) => {
+      if (typeof event.data === 'string') {
+        try {
+          const data = JSON.parse(event.data);
+          // YouTube 狀態 0 代表播放結束 (ENDED)
+          if (data.event === 'onStateChange' && data.info === 0) {
+            const currentBarn = barnsData[activeBarnIndex];
+            if (currentBarn) {
+              const shield = document.getElementById('connectingShield');
+              const activeIframe = document.getElementById(`iframe_${currentBarn.id}`);
+              const adj = currentBarn.adjust || { start: 0 };
+              const startSec = parseInt(adj.start, 10) || 0;
+
+              if (shield) {
+                shield.classList.add('active');
+                clearTimeout(shield._hideTimer);
+                shield._hideTimer = setTimeout(() => {
+                  if (activeIframe && activeIframe.contentWindow) {
+                    activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [startSec, true] }), '*');
+                    activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+                  }
+                  shield.classList.remove('active');
+                }, 5000);
+              }
+            }
+          }
+        } catch(e) {}
+      }
+    });
 
     function stopWinterVideo() {
       if (loopTimer) clearInterval(loopTimer);
@@ -1314,7 +1375,7 @@
         ctx.restore();
       }
 
-      // 木屋招牌繪製：Pponyo 使用 Windows 98 復古英文，韓文使用復古點陣
+      // 木屋招牌繪製：Pponyo 採用復古等寬電腦英文，韓文使用復古點陣
       function drawLowSatBarn(x, y, width, title, isSelected, customImgUrl, isKorean) {
         const h = width * 0.92;
         ctx.save();
@@ -1375,7 +1436,6 @@
           if (isKorean) {
             ctx.font = 'bold 10.5px "GulimChe", "DotumChe", monospace, sans-serif';
           } else {
-            // Pponyo 使用與系統一致的復古等寬電腦字型
             ctx.font = 'bold 10px "Pixelated MS Sans Serif", "Courier New", monospace, sans-serif';
           }
           ctx.textAlign = 'center';
@@ -1507,7 +1567,6 @@
         ctx.fillStyle = '#5c2d16';
         ctx.fillRect(-14 + trot, -11 + bob, 4.5, 12);
         ctx.fillRect(8 - trot, -11 + bob, 5, 12);
-
         ctx.fillStyle = '#72371b';
         ctx.fillRect(-7 - trot, -11 + bob, 4.5, 12);
         ctx.fillRect(14 + trot, -11 + bob, 5, 12);
