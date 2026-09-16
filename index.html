@@ -11,8 +11,6 @@
   <meta property="og:image" content="https://lh3.googleusercontent.com/d/17WOfRelvxF9qJrmBwUpOuJGdgFaLj06o">
 
   <link rel="stylesheet" href="https://unpkg.com/98.css">
-  <!-- 引入像素字型 -->
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * { 
       box-sizing: border-box; 
@@ -29,7 +27,6 @@
       --taskbar-h: calc(38px + var(--safe-bottom));
     }
 
-    /* 預設頂部為天空藍，進入視訊後切為純黑 */
     html, body {
       margin: 0; padding: 0;
       width: 100vw; height: 100vh;
@@ -109,7 +106,7 @@
       text-shadow: 1px 1px 0px #000;
     }
 
-    /* 地板提示文字：復古點陣中文字體、亮黃色、立體陰影、呼吸閃爍 */
+    /* 地板提示文字：復古點陣中文字體、亮黃色、呼吸閃爍 */
     .floor-prompt-text {
       position: absolute;
       left: 50%;
@@ -224,15 +221,16 @@
       transform-origin: center center;
     }
     
-    /* 裁切外推：將頂部創作者名與 YouTube 控制項移至螢幕可視區外 */
+    /* 裁剪外推：136% 外推將頂部創作者名與 YouTube 控制項切除在視窗外 */
     .video-element-wrapper iframe {
       position: absolute;
-      width: 138% !important;
-      height: 138% !important;
+      width: 136% !important;
+      height: 136% !important;
       top: 50% !important;
       left: 50% !important;
       transform: translate(-50%, -50%) !important;
       border: none !important;
+      pointer-events: none !important;
     }
     .video-element-wrapper video {
       width: 100%;
@@ -387,7 +385,7 @@
             <div class="video-element-wrapper" id="winterVideoWrapper">
               <iframe id="winterVideoIframe" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
-              <!-- 遮罩層：禁止暫停與跳轉 -->
+              <!-- 雙層防干擾遮罩層 -->
               <div class="yt-pointer-guard" id="ytGuard"></div>
             </div>
           </div>
@@ -600,7 +598,7 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_gesture_sync_v20";
+    const CONFIG_KEY = "winter_wildwest_v2026_safari_zero_lag_v22";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -626,6 +624,25 @@
 
     let dogBubbleTimer = 0;
 
+    // Web Audio 音訊授權鎖
+    let audioUnlocked = false;
+    function unlockWebAudio() {
+      if (audioUnlocked) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          const ctx = new AudioContext();
+          const buffer = ctx.createBuffer(1, 1, 22050);
+          const source = ctx.createBufferSource();
+          source.buffer = buffer;
+          source.connect(ctx.destination);
+          source.start(0);
+          if (ctx.state === 'suspended') ctx.resume();
+        }
+        audioUnlocked = true;
+      } catch(e) {}
+    }
+
     const imageCache = {};
     function formatDriveUrl(url) {
       if (!url) return '';
@@ -650,6 +667,7 @@
     }
 
     function handleGlobalClick(e) {
+      unlockWebAudio(); // 任意點擊解鎖音訊授權
       const menu = document.getElementById('startMenu');
       if (menu && menu.style.display === 'block') {
         menu.style.display = 'none';
@@ -728,7 +746,10 @@
         btn.type = 'button';
         btn.className = `barn-chip ${idx === activeBarnIndex ? 'active' : ''}`;
         btn.innerHTML = `🏠 ${b.name}`;
-        btn.onclick = () => selectBarnAndMove(idx);
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          selectBarnAndMove(idx);
+        };
         bar.appendChild(btn);
       });
     }
@@ -739,6 +760,7 @@
       sceneZoomScale = 1;
       targetBarn = null;
 
+      // 頂部變回藍色
       document.body.classList.remove('in-video-call');
       const meta = document.getElementById('themeColorMeta');
       if (meta) meta.setAttribute('content', '#7b9cb0');
@@ -753,18 +775,18 @@
     }
 
     // ==============================================================
-    // 關鍵突破：0 秒內在同一點擊手勢棧中立即掛載有聲影片，同時啟動 Zoom-In
+    // 解決第一次卡紅色鍵核心：點擊當下的同調呼叫（Synchronous Invocation）
     // ==============================================================
     function selectBarnAndMove(idx) {
+      unlockWebAudio(); // 0ms 解鎖音訊
       activeBarnIndex = idx;
       renderSelectorChips();
       targetBarn = barnsData[idx];
 
-      // 步驟 1：在此點擊事件的瞬間直接加載並播放（絕不延遲，100% 抓住 Safari 授權窗口）
-      playWinterVideoDirectWithSound(targetBarn);
+      // 核心關鍵：在同一使用者手勢中直接注入有聲播放來源，使 Safari 判定為合法使用者行為！
+      startDirectAudioPlayback(targetBarn);
       applyVideoTransform(targetBarn);
 
-      // 步驟 2：前景同步展開平滑特寫鏡頭 Zoom-in 與小狗鑽門
       const canvas = document.getElementById('ranchCanvas');
       const w = canvas.width;
       const h = canvas.height;
@@ -777,14 +799,14 @@
 
       setTimeout(() => {
         isZoomingScene = true;
-        // 0.6 秒後無縫平順接入已經在有聲播放的視訊畫面！
         setTimeout(() => {
           enterVideoChat(targetBarn);
-        }, 600);
-      }, 550);
+        }, 550);
+      }, 500);
     }
 
     function enterVideoChat(barn) {
+      // 頂部與背景切為純黑
       document.body.classList.add('in-video-call');
       const meta = document.getElementById('themeColorMeta');
       if (meta) meta.setAttribute('content', '#000000');
@@ -808,8 +830,8 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 核心有聲播放機制：完全消滅紅色播放鍵與黑屏
-    function playWinterVideoDirectWithSound(barn) {
+    // 解決黑屏與有聲播放核心：去除所有異常標籤，以標準 YouTube 嵌入實現秒開
+    function startDirectAudioPlayback(barn) {
       const url = barn.videoUrl;
       const iframe = document.getElementById('winterVideoIframe');
       const directVideo = document.getElementById('winterVideoDirect');
@@ -827,28 +849,28 @@
         directVideo.pause(); directVideo.src = ''; directVideo.style.display = 'none';
         iframe.style.display = 'block';
 
-        // 參數：autoplay=1&mute=0&playsinline=1&controls=0&loop=1
-        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}`;
+        // 參數注入：有聲播放、自動播放、行內播放，並加上唯一的 playlist 實現無縫重複播放
+        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}&enablejsapi=1`;
         if (startSec > 0) srcUrl += `&start=${startSec}`;
         if (endSec > startSec) srcUrl += `&end=${endSec}`;
 
         iframe.src = srcUrl;
 
-        // 訊號補強，確保有聲播放暢行無阻
-        const triggerUnmutePlay = () => {
+        // 雙重安全信號發送，防止 iOS 瀏覽器暫停
+        const postPlay = () => {
           if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
             iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
           }
         };
-        setTimeout(triggerUnmutePlay, 300);
-        setTimeout(triggerUnmutePlay, 800);
+        setTimeout(postPlay, 250);
+        setTimeout(postPlay, 700);
 
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
           loopTimer = setInterval(() => {
             iframe.src = srcUrl;
-            setTimeout(triggerUnmutePlay, 300);
+            setTimeout(postPlay, 250);
           }, duration);
         }
       } else if (driveId) {
@@ -866,9 +888,7 @@
         if (p !== undefined) {
           p.catch(() => {
             directVideo.muted = true;
-            directVideo.play().then(() => {
-              directVideo.muted = false;
-            });
+            directVideo.play().then(() => { directVideo.muted = false; });
           });
         }
 
@@ -948,7 +968,7 @@
       saveRanchState();
       closeModal('adjustModal');
       alert("✅ 視訊設定已儲存！");
-      playWinterVideoDirectWithSound(barnsData[activeBarnIndex]);
+      startDirectAudioPlayback(barnsData[activeBarnIndex]);
     }
 
     function openEnvironmentModal() {
@@ -1095,7 +1115,7 @@
 
       saveRanchState();
       if (document.getElementById('videoChatContainer').classList.contains('active')) {
-        playWinterVideoDirectWithSound(b);
+        startDirectAudioPlayback(b);
       }
     }
 
@@ -1129,6 +1149,7 @@
 
         const horizonY = canvas.height * (ranchConfig.environment.horizonRatio || 0.67);
 
+        // 提示文字垂直正中對齊地表
         const promptEl = document.getElementById('floorPrompt');
         if (promptEl) {
           promptEl.style.top = (horizonY + (canvas.height - horizonY) * 0.44) + 'px';
@@ -1169,6 +1190,7 @@
       });
 
       canvas.addEventListener('click', (e) => {
+        unlockWebAudio(); // 點擊畫布時也解鎖授權
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
@@ -1471,7 +1493,7 @@
           drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
         });
 
-        // ==================== 5. 狗與馬 ====================
+        // ==================== 5. 狗與馬 (小狗下移與小馬同水平線) ====================
         const dogScale = ((ranchConfig.characters.dog.scale || 130) / 100) * (isMobile ? 1.25 : 1.35);
         const horseScale = ((ranchConfig.characters.horse.scale || 115) / 100) * (isMobile ? 1.15 : 1.25);
 
@@ -1519,6 +1541,33 @@
 
       renderLoop();
     }
+
+    // ==============================================================
+    // 切換 Safari 喚醒自動自我修復（Visibility Change Auto-Wake）
+    // 解決切換 App 或 Safari 標籤頁面後的黑屏與凍結問題！
+    // ==============================================================
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        unlockWebAudio();
+        const canvas = document.getElementById('ranchCanvas');
+        if (canvas) {
+          const wrap = document.getElementById('ranchCanvasWrap');
+          if (wrap) {
+            canvas.width = wrap.clientWidth;
+            canvas.height = wrap.clientHeight;
+          }
+        }
+        // 若正在視訊通話，恢復有聲影片播放
+        if (document.getElementById('videoChatContainer').classList.contains('active')) {
+          const b = barnsData[activeBarnIndex];
+          if (b) startDirectAudioPlayback(b);
+        }
+      }
+    });
+
+    window.addEventListener("pageshow", () => {
+      unlockWebAudio();
+    });
 
     window.addEventListener('DOMContentLoaded', () => {
       renderSelectorChips();
