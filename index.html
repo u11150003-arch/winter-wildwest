@@ -19,6 +19,7 @@
     }
 
     :root {
+      /* 低飽和度淡金色星形游標 */
       --soft-star-cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><polygon points='12,1.5 15.3,8.8 23.2,9.6 17.2,14.8 19,22.6 12,18.5 5,22.6 6.8,14.8 0.8,9.6 8.7,8.8' fill='%23ecd674' stroke='%238a7131' stroke-width='1.5'/></svg>") 5 5, pointer;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-left: env(safe-area-inset-left, 0px);
@@ -26,7 +27,6 @@
       --taskbar-h: calc(38px + var(--safe-bottom));
     }
 
-    /* 預設頂部為天空藍，進入視訊後切為純黑 */
     html, body {
       margin: 0; padding: 0;
       width: 100vw; height: 100vh;
@@ -142,7 +142,7 @@
       width: 100%; height: 100%; display: block;
     }
 
-    /* 關鍵修復：改用 opacity/visibility 控制，絕不用 display:none，確保 Safari GPU 渲染線程始終處於活化狀態 */
+    /* 視訊分割容器：全黑背景 */
     .video-chat-container {
       position: absolute;
       top: max(6px, env(safe-area-inset-top, 6px));
@@ -236,6 +236,10 @@
       left: 50% !important;
       transform: translate(-50%, -50%) !important;
       border: none !important;
+      display: none; /* 預載時隱藏，由程式激活顯示 */
+    }
+    .video-element-wrapper iframe.active-video {
+      display: block !important;
     }
     .video-element-wrapper video {
       width: 100%;
@@ -386,8 +390,11 @@
         </div>
         <div class="video-win-body">
           <div class="video-viewport-box">
+            <!-- 預載入三座專屬視訊插槽，不再重複銷毀 iframe，徹底根除 Safari 拒載與黑屏 -->
             <div class="video-element-wrapper" id="winterVideoWrapper">
-              <iframe id="winterVideoIframe" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+              <iframe id="iframe_barn_0101" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+              <iframe id="iframe_barn_1117" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+              <iframe id="iframe_barn_0618" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
               <div class="yt-pointer-guard" id="ytGuard"></div>
             </div>
@@ -601,7 +608,7 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_ultimate_safari_v25";
+    const CONFIG_KEY = "winter_wildwest_v2026_bridge_final_v30";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -627,7 +634,7 @@
 
     let dogBubbleTimer = 0;
 
-    // Web Audio 音訊授權解鎖 (iOS 必需)
+    // Web Audio 授權鎖
     let audioContextUnlocked = false;
     function unlockSafariAudio() {
       if (audioContextUnlocked) return;
@@ -637,11 +644,11 @@
           const ctx = new AudioCtx();
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
-          gain.gain.value = 0.001;
+          gain.gain.value = 0.0001;
           osc.connect(gain);
           gain.connect(ctx.destination);
           osc.start(0);
-          osc.stop(0.05);
+          osc.stop(0.04);
           if (ctx.state === 'suspended') ctx.resume();
         }
         audioContextUnlocked = true;
@@ -708,6 +715,7 @@
       ranchConfig.barns = barnsData;
       localStorage.setItem(CONFIG_KEY, JSON.stringify(ranchConfig));
       renderSelectorChips();
+      preloadAllBarnIframes();
     }
 
     function exportRanchState() {
@@ -759,6 +767,26 @@
       });
     }
 
+    // ==============================================================
+    // 預載入三座實體視訊插槽：保證首次點擊不必重建 DOM，秒速開播
+    // ==============================================================
+    function preloadAllBarnIframes() {
+      barnsData.forEach(b => {
+        const iframe = document.getElementById(`iframe_${b.id}`);
+        if (!iframe) return;
+        const ytId = extractYoutubeId(b.videoUrl);
+        if (ytId) {
+          const adj = b.adjust || { start: 0, end: 0 };
+          const startSec = parseInt(adj.start, 10) || 0;
+          let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=0&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}&enablejsapi=1`;
+          if (startSec > 0) srcUrl += `&start=${startSec}`;
+          if (!iframe.src || iframe.src === 'about:blank') {
+            iframe.src = srcUrl;
+          }
+        }
+      });
+    }
+
     function returnToRanchMap() {
       isDogHeadingToBarn = false;
       isZoomingScene = false;
@@ -779,7 +807,7 @@
     }
 
     // ==============================================================
-    // 解決黑屏與第一次自動播放核心：雙軌實時握手技術
+    // 0 延遲原生手勢轉移：在點擊事件的第一個微秒向 YouTube 傳遞有聲播放授權
     // ==============================================================
     function selectBarnAndMove(idx) {
       unlockSafariAudio();
@@ -787,11 +815,11 @@
       renderSelectorChips();
       targetBarn = barnsData[idx];
 
-      // 1. 在點擊瞬間即刻發起播放授權與載入（在同一個手勢線程中）
-      startDirectAudioPlayback(targetBarn);
+      // 1. 在點擊的瞬間直接喚醒目標 iframe，絕無延遲與握手超時！
+      activateAndPlayBarnVideo(targetBarn);
       applyVideoTransform(targetBarn);
 
-      // 2. 前景同步拉近特寫 Zoom-In 動畫
+      // 2. 前景展開拉近特寫 Zoom-In 與鑽門演出
       const canvas = document.getElementById('ranchCanvas');
       const w = canvas.width;
       const h = canvas.height;
@@ -818,7 +846,6 @@
       document.getElementById('ranchCanvasWrap').style.display = 'none';
       document.getElementById('ranchHeader').style.display = 'none';
       
-      // 激活可視性（不再使用 display:none，畫面直接現身秒開）
       const container = document.getElementById('videoChatContainer');
       container.classList.add('active');
 
@@ -836,58 +863,71 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 解決黑屏與自動播放核心
-    function startDirectAudioPlayback(barn) {
-      const url = barn.videoUrl;
-      const iframe = document.getElementById('winterVideoIframe');
+    // 啟動專屬實體視訊插槽：有聲自動播放
+    function activateAndPlayBarnVideo(barn) {
+      if (loopTimer) clearInterval(loopTimer);
+
+      // 隱藏非當前的視訊
+      barnsData.forEach(b => {
+        const el = document.getElementById(`iframe_${b.id}`);
+        if (el) {
+          el.classList.remove('active-video');
+          if (b.id !== barn.id && el.contentWindow) {
+            el.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
+          }
+        }
+      });
+
       const directVideo = document.getElementById('winterVideoDirect');
+      const activeIframe = document.getElementById(`iframe_${barn.id}`);
+      const ytId = extractYoutubeId(barn.videoUrl);
+      const driveId = extractDriveId(barn.videoUrl);
       const adj = barn.adjust || { scale: 100, x: 50, y: 50, start: 0, end: 0 };
       const startSec = parseInt(adj.start, 10) || 0;
       const endSec = parseInt(adj.end, 10) || 0;
 
-      if (loopTimer) clearInterval(loopTimer);
-      if (!url) return;
+      if (ytId && activeIframe) {
+        directVideo.pause(); directVideo.style.display = 'none';
+        activeIframe.classList.add('active-video');
 
-      const driveId = extractDriveId(url);
-      const ytId = extractYoutubeId(url);
-
-      if (ytId) {
-        directVideo.pause(); directVideo.src = ''; directVideo.style.display = 'none';
-        iframe.style.display = 'block';
-
-        // 參數注入：playsinline=1, autoplay=1, mute=0，標準通過所有審查
+        // 確保 iframe 具備正確播放網址
         let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}&enablejsapi=1`;
         if (startSec > 0) srcUrl += `&start=${startSec}`;
         if (endSec > startSec) srcUrl += `&end=${endSec}`;
 
-        iframe.src = srcUrl;
+        if (!activeIframe.src || activeIframe.src.indexOf(ytId) === -1) {
+          activeIframe.src = srcUrl;
+        }
 
-        // 透過 postMessage 發送雙重信號解鎖音訊與播放，杜絕 Safari 卡住
-        const postPlay = () => {
-          if (iframe && iframe.contentWindow) {
-            iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
-            iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+        // 即刻送出有聲播放指令
+        const sendPlay = () => {
+          if (activeIframe.contentWindow) {
+            activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
+            activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
           }
         };
-        setTimeout(postPlay, 200);
-        setTimeout(postPlay, 600);
+        sendPlay();
+        setTimeout(sendPlay, 180);
+        setTimeout(sendPlay, 450);
 
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
           loopTimer = setInterval(() => {
-            iframe.src = srcUrl;
-            setTimeout(postPlay, 200);
+            if (activeIframe.contentWindow) {
+              activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [startSec, true] }), '*');
+              activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+            }
           }, duration);
         }
-      } else if (driveId) {
-        directVideo.pause(); directVideo.src = ''; directVideo.style.display = 'none';
-        iframe.style.display = 'block';
-        iframe.src = `https://drive.google.com/file/d/${driveId}/preview`;
+      } else if (driveId && activeIframe) {
+        directVideo.pause(); directVideo.style.display = 'none';
+        activeIframe.classList.add('active-video');
+        activeIframe.src = `https://drive.google.com/file/d/${driveId}/preview`;
       } else {
-        iframe.src = ''; iframe.style.display = 'none';
+        if (activeIframe) activeIframe.classList.remove('active-video');
         directVideo.style.display = 'block';
         directVideo.loop = (endSec <= startSec);
-        directVideo.src = url;
+        directVideo.src = barn.videoUrl;
         directVideo.muted = false;
         
         const p = directVideo.play();
@@ -897,32 +937,20 @@
             directVideo.play().then(() => { directVideo.muted = false; });
           });
         }
-
-        directVideo.onloadedmetadata = () => {
-          if (startSec > 0 && startSec < directVideo.duration) directVideo.currentTime = startSec;
-          directVideo.play().catch(() => {});
-        };
-
-        directVideo.ontimeupdate = () => {
-          if (endSec > startSec && endSec <= directVideo.duration && directVideo.currentTime >= endSec) {
-            directVideo.currentTime = startSec;
-            directVideo.play();
-          }
-        };
-
-        directVideo.onended = () => {
-          directVideo.currentTime = (startSec < directVideo.duration) ? startSec : 0;
-          directVideo.play();
-        };
       }
     }
 
     function stopWinterVideo() {
       if (loopTimer) clearInterval(loopTimer);
-      const iframe = document.getElementById('winterVideoIframe');
+      barnsData.forEach(b => {
+        const el = document.getElementById(`iframe_${b.id}`);
+        if (el && el.contentWindow) {
+          el.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
+          el.classList.remove('active-video');
+        }
+      });
       const directVideo = document.getElementById('winterVideoDirect');
-      if (iframe) iframe.src = '';
-      if (directVideo) { directVideo.pause(); directVideo.src = ''; directVideo.style.display = 'none'; }
+      if (directVideo) { directVideo.pause(); directVideo.style.display = 'none'; }
     }
 
     function openAdjustModal() {
@@ -974,7 +1002,7 @@
       saveRanchState();
       closeModal('adjustModal');
       alert("✅ 視訊設定已儲存！");
-      startDirectAudioPlayback(barnsData[activeBarnIndex]);
+      activateAndPlayBarnVideo(barnsData[activeBarnIndex]);
     }
 
     function openEnvironmentModal() {
@@ -1121,7 +1149,7 @@
 
       saveRanchState();
       if (document.getElementById('videoChatContainer').classList.contains('active')) {
-        startDirectAudioPlayback(b);
+        activateAndPlayBarnVideo(b);
       }
     }
 
@@ -1498,7 +1526,7 @@
           drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
         });
 
-        // ==================== 5. 狗與馬 ====================
+        // ==================== 5. 狗與馬 (小狗下移與小馬同水平線) ====================
         const dogScale = ((ranchConfig.characters.dog.scale || 130) / 100) * (isMobile ? 1.25 : 1.35);
         const horseScale = ((ranchConfig.characters.horse.scale || 115) / 100) * (isMobile ? 1.15 : 1.25);
 
@@ -1519,7 +1547,7 @@
         drawHorseWithHead(horsePos.x, horsePos.y, horseScale);
         drawGroundedDog(dogPos.x, dogPos.y, dogScale);
 
-        // ==================== 6. 小狗對話框 ====================
+        // ==================== 6. 小狗對話框 (每15秒淡入淡出顯示3秒，輪流交替) ====================
         const cycleTime = 15;
         const showDuration = 3.0;
         const fadeTime = 0.4;
@@ -1561,7 +1589,7 @@
         }
         if (document.getElementById('videoChatContainer').classList.contains('active')) {
           const b = barnsData[activeBarnIndex];
-          if (b) startDirectAudioPlayback(b);
+          if (b) activateAndPlayBarnVideo(b);
         }
       }
     });
@@ -1572,6 +1600,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       renderSelectorChips();
+      preloadAllBarnIframes();
       initRanchSystem();
     });
   </script>
