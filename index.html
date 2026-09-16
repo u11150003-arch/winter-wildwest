@@ -32,8 +32,7 @@
       width: 100vw; height: 100vh;
       overflow: hidden;
       background: #7b9cb0;
-      /* 韓文與中英通用經典點陣字體 */
-      font-family: "GulimChe", "DotumChe", "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
+      font-family: "Pixelated MS Sans Serif", "Courier New", "GulimChe", monospace, sans-serif !important;
       cursor: default;
       transition: background 0.25s ease;
     }
@@ -47,7 +46,7 @@
     }
 
     button, a, .start-menu li {
-      font-family: "GulimChe", "DotumChe", "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
+      font-family: "Pixelated MS Sans Serif", "Courier New", monospace, sans-serif !important;
     }
 
     /* 頂部管理列 */
@@ -99,7 +98,6 @@
       z-index: 10;
       pointer-events: none;
     }
-    /* 手機端大標題字體顯著放大 */
     .ranch-header h2 {
       margin: 0;
       font-size: 24px;
@@ -264,7 +262,7 @@
       border: none;
     }
 
-    /* 統一大小連線中遮罩：持續4.75秒，徹底消滅跳轉暫停符號 */
+    /* 統一大小連線中遮罩：持續4.8秒 */
     .fixed-connecting-shield {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -330,7 +328,10 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
       transition: all 0.2s ease;
       white-space: nowrap;
-      font-family: "GulimChe", "DotumChe", monospace, sans-serif !important;
+      font-family: "Pixelated MS Sans Serif", "Courier New", monospace, sans-serif !important;
+    }
+    .barn-chip.korean-chip {
+      font-family: "GulimChe", "DotumChe", "Pixelated MS Sans Serif", monospace, sans-serif !important;
     }
     .barn-chip:hover {
       background: #a45d2d !important;
@@ -437,7 +438,7 @@
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
               <div class="yt-pointer-guard"></div>
             </div>
-            <!-- 遮罩時間設定為 4.75 秒 -->
+            <!-- 遮罩時間改為 4.8 秒 (4800ms) -->
             <div class="fixed-connecting-shield" id="connectingShield">⭐️ 連線中...</div>
           </div>
         </div>
@@ -626,6 +627,7 @@
         {
           "id": "barn_winter",
           "name": "윈터",
+          "isKorean": true,
           "customImg": "",
           "xRatio": 0.18,
           "videoUrl": "https://youtu.be/dVhNMMejAtA?si=3hNsInSYm_CyfAcF",
@@ -634,6 +636,7 @@
         {
           "id": "barn_pponyo",
           "name": "Pponyo",
+          "isKorean": false,
           "customImg": "",
           "xRatio": 0.50,
           "videoUrl": "https://youtu.be/Nxybqp22WNI?si=BnwmB_4uMEmIqO1a",
@@ -642,6 +645,7 @@
         {
           "id": "barn_minjeong",
           "name": "민정",
+          "isKorean": true,
           "customImg": "",
           "xRatio": 0.82,
           "videoUrl": "https://youtu.be/nOA1qS4AaiQ?si=aNod6kn17hyqYDTK",
@@ -650,8 +654,8 @@
       ]
     };
 
-    // 升級版本快取至 4.75 秒版本
-    const CONFIG_KEY = "winter_wildwest_v2026_pponyo_475s_v75";
+    // 升級版本快取至 4.8 秒版本
+    const CONFIG_KEY = "winter_wildwest_v2026_pponyo_4800ms_v80";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -788,6 +792,7 @@
       }
     }
 
+    // 按鍵標籤：Pponyo 採用與其他英文一致的 Pixelated MS Sans Serif
     function renderSelectorChips() {
       const bar = document.getElementById('barnSelectorBar');
       if (!bar) return;
@@ -796,7 +801,7 @@
       barnsData.forEach((b, idx) => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = `barn-chip ${idx === activeBarnIndex ? 'active' : ''}`;
+        btn.className = `barn-chip ${idx === activeBarnIndex ? 'active' : ''} ${b.isKorean ? 'korean-chip' : ''}`;
         btn.innerHTML = `🏠 ${b.name}`;
         btn.onclick = (e) => {
           e.stopPropagation();
@@ -894,7 +899,7 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 遮罩時間設定為 4.75 秒（4750ms）
+    // 遮罩時間設定為 4.8 秒（4800ms）
     function activateAndPlayBarnVideo(barn) {
       if (loopTimer) clearInterval(loopTimer);
 
@@ -945,12 +950,12 @@
         setTimeout(sendPlay, 800);
         setTimeout(sendPlay, 2200);
 
-        // 遮罩精準設定為 4.75 秒 (4750ms)
+        // 遮罩精準設定為 4.8 秒 (4800ms)
         if (shield) {
           shield._hideTimer = setTimeout(() => {
             sendPlay();
             shield.classList.remove('active');
-          }, 4750);
+          }, 4800);
         }
 
         if (endSec > startSec) {
@@ -1309,7 +1314,8 @@
         ctx.restore();
       }
 
-      function drawLowSatBarn(x, y, width, title, isSelected, customImgUrl) {
+      // 木屋招牌繪製：Pponyo 使用 Windows 98 復古英文，韓文使用復古點陣
+      function drawLowSatBarn(x, y, width, title, isSelected, customImgUrl, isKorean) {
         const h = width * 0.92;
         ctx.save();
         ctx.translate(x, y);
@@ -1366,7 +1372,12 @@
           ctx.strokeRect(-width * 0.44, -h + 6, width * 0.88, 18);
 
           ctx.fillStyle = '#2d180d';
-          ctx.font = 'bold 10.5px "GulimChe", "DotumChe", monospace, sans-serif';
+          if (isKorean) {
+            ctx.font = 'bold 10.5px "GulimChe", "DotumChe", monospace, sans-serif';
+          } else {
+            // Pponyo 使用與系統一致的復古等寬電腦字型
+            ctx.font = 'bold 10px "Pixelated MS Sans Serif", "Courier New", monospace, sans-serif';
+          }
           ctx.textAlign = 'center';
           ctx.fillText(title, 0, -h + 19);
         }
@@ -1427,7 +1438,7 @@
         ctx.restore();
       }
 
-      // 前腿與胸膛扎實相連的像素馬
+      // 自然前腿相連像素馬
       function drawNaturalWalkingHorse(x, y, scale) {
         ctx.save();
         ctx.translate(x, y);
@@ -1452,16 +1463,16 @@
         ctx.fillStyle = '#220f08';
         ctx.fillRect(-22, -30 + bob, 5, 20);
 
-        // 2. 肌肉根部：胸肩根部加厚，前腿直接自深色胸膛向下扎實伸出
+        // 2. 肌肉根部：胸肩根部加厚，前腿直接自深色胸膛向下生長
         ctx.fillStyle = '#6b351a';
-        ctx.fillRect(-17, -22 + bob, 9, 13); // 後臀大腿根
-        ctx.fillRect(6, -24 + bob, 14, 15);  // 前胸前肩根
+        ctx.fillRect(-17, -22 + bob, 9, 13);
+        ctx.fillRect(6, -24 + bob, 14, 15);
 
         // 3. 軀幹主體
         ctx.fillStyle = '#7a3e21';
         ctx.fillRect(-18, -32 + bob, 38, 20);
         ctx.fillStyle = '#632f17';
-        ctx.fillRect(-16, -17 + bob, 34, 6); // 腹部深色陰影
+        ctx.fillRect(-16, -17 + bob, 34, 6);
 
         // 4. 頸部
         ctx.fillStyle = '#7a3e21';
@@ -1477,29 +1488,26 @@
         ctx.fillStyle = '#220f08';
         ctx.fillRect(8, -43 + bob, 7, 18);
 
-        // 6. 馬頭與溫潤馬眼
+        // 6. 馬頭與眼睛
         ctx.fillStyle = '#7a3e21';
         ctx.fillRect(18, -48 + bob, 15, 12);
-        ctx.fillRect(29, -45 + bob, 6, 7); // 嘴吻
+        ctx.fillRect(29, -45 + bob, 6, 7);
         ctx.fillStyle = '#1c0b05';
-        ctx.fillRect(32, -43 + bob, 2.5, 2.5); // 鼻孔
+        ctx.fillRect(32, -43 + bob, 2.5, 2.5);
 
-        // 溫和馬眼
         ctx.fillStyle = '#110502';
         ctx.fillRect(23, -46 + bob, 3, 3);
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(23.5, -46 + bob, 1, 1);
 
-        // 馬耳朵
         ctx.fillStyle = '#542611';
         ctx.fillRect(19, -53 + bob, 4, 6);
 
-        // 7. 四肢下段：前肢直接自胸膛向下伸展，步伐自然
+        // 7. 四肢下段
         ctx.fillStyle = '#5c2d16';
-        // 右後腿 & 左前腿
         ctx.fillRect(-14 + trot, -11 + bob, 4.5, 12);
         ctx.fillRect(8 - trot, -11 + bob, 5, 12);
-        // 左後腿 & 右前腿
+
         ctx.fillStyle = '#72371b';
         ctx.fillRect(-7 - trot, -11 + bob, 4.5, 12);
         ctx.fillRect(14 + trot, -11 + bob, 5, 12);
@@ -1620,7 +1628,7 @@
         const barnBaseW = isMobile ? 96 : 138;
         barnsData.forEach((b, idx) => {
           const bx = w * b.xRatio;
-          drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
+          drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg, b.isKorean);
         });
 
         // ==================== 5. 狗與馬 ====================
