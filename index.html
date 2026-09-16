@@ -99,7 +99,7 @@
       z-index: 10;
       pointer-events: none;
     }
-    /* 手機端 WINTER WILDWEST 顯著放大 */
+    /* 手機端大標題字體顯著放大 */
     .ranch-header h2 {
       margin: 0;
       font-size: 24px;
@@ -264,7 +264,7 @@
       border: none;
     }
 
-    /* 統一大小連線中遮罩：秒數延長，徹底消滅跳轉暫停符號 */
+    /* 統一大小連線中遮罩：持續4秒，徹底消滅跳轉暫停符號 */
     .fixed-connecting-shield {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -396,7 +396,7 @@
 </head>
 <body onclick="handleGlobalClick(event)">
 
-  <!-- 頂部管理工具列（點擊開始選單中的「切換管理員模式」才展開，平時不阻擋視野） -->
+  <!-- 頂部管理工具列 -->
   <div class="top-bar-wrapper" id="topBarWrapper">
     <div class="top-actions-viewport" id="topActionsViewport">
       <button onclick="toggleAdmin(event)">🔓 退出管理</button>
@@ -432,12 +432,12 @@
           <div class="video-viewport-box">
             <div class="video-element-wrapper" id="winterVideoWrapper">
               <iframe id="iframe_barn_winter" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-              <iframe id="iframe_barn_ponyo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+              <iframe id="iframe_barn_pponyo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <iframe id="iframe_barn_minjeong" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
               <div class="yt-pointer-guard"></div>
             </div>
-            <!-- 遮罩時間延長，100% 蓋住跳轉與暫停鍵 -->
+            <!-- 遮罩時間改為4秒 -->
             <div class="fixed-connecting-shield" id="connectingShield">⭐️ 連線中...</div>
           </div>
         </div>
@@ -589,7 +589,7 @@
     const ADMIN_PASSWORD = "admin";
     let isAdmin = false;
 
-    // 房舍正式更名為：윈터, PONYO, 민정 (韓文復古點陣支援)
+    // 房舍正式更名為：윈터, Pponyo, 민정
     const RANCH_MASTER_CONFIG = {
       "environment": {
         "horizonRatio": 0.67
@@ -632,8 +632,8 @@
           "adjust": { "scale": 146, "x": 50, "y": 50, "start": 0, "end": 0 }
         },
         {
-          "id": "barn_ponyo",
-          "name": "PONYO",
+          "id": "barn_pponyo",
+          "name": "Pponyo",
           "customImg": "",
           "xRatio": 0.50,
           "videoUrl": "https://youtu.be/Nxybqp22WNI?si=BnwmB_4uMEmIqO1a",
@@ -650,8 +650,8 @@
       ]
     };
 
-    // 升級版本快取，立即載入韓文更名與強化遮罩
-    const CONFIG_KEY = "winter_wildwest_v2026_korean_long_shield_v60";
+    // 升級版本快取，立即載入更名與4秒遮罩
+    const CONFIG_KEY = "winter_wildwest_v2026_pponyo_4s_v70";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -788,7 +788,7 @@
       }
     }
 
-    // 按鍵標籤更新：윈터, PONYO, 민정
+    // 按鍵標籤：윈터, Pponyo, 민정
     function renderSelectorChips() {
       const bar = document.getElementById('barnSelectorBar');
       if (!bar) return;
@@ -895,7 +895,7 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 遮罩時間延長整整 3 秒（由 2.2 秒延長至 5.2 秒），徹底覆蓋跳轉與暫停鍵
+    // 連線遮罩秒數改為 4 秒（4000ms），精準掩蓋跳轉與暫停鍵
     function activateAndPlayBarnVideo(barn) {
       if (loopTimer) clearInterval(loopTimer);
 
@@ -942,16 +942,16 @@
           }
         };
         sendPlay();
-        setTimeout(sendPlay, 300);
-        setTimeout(sendPlay, 1000);
-        setTimeout(sendPlay, 2500);
+        setTimeout(sendPlay, 250);
+        setTimeout(sendPlay, 800);
+        setTimeout(sendPlay, 2200);
 
-        // 延長 3 秒（總時長 5.2 秒），確認 YouTube 內部跳轉重繪全數完成後才掀開黑幕
+        // 遮罩改為 4 秒 (4000ms)，確保跳轉結束後順暢揭幕
         if (shield) {
           shield._hideTimer = setTimeout(() => {
             sendPlay();
             shield.classList.remove('active');
-          }, 5200);
+          }, 4000);
         }
 
         if (endSec > startSec) {
@@ -1310,7 +1310,7 @@
         ctx.restore();
       }
 
-      // 木屋招牌繪製：支援韓文復古點陣 (윈터, PONYO, 민정)
+      // 木屋招牌繪製：支援韓文復古點陣 (윈터, Pponyo, 민정)
       function drawLowSatBarn(x, y, width, title, isSelected, customImgUrl) {
         const h = width * 0.92;
         ctx.save();
@@ -1368,7 +1368,6 @@
           ctx.strokeRect(-width * 0.44, -h + 6, width * 0.88, 18);
 
           ctx.fillStyle = '#2d180d';
-          // 韓文字型設定為復古點陣
           ctx.font = 'bold 10.5px "GulimChe", "DotumChe", monospace, sans-serif';
           ctx.textAlign = 'center';
           ctx.fillText(title, 0, -h + 19);
@@ -1430,7 +1429,7 @@
         ctx.restore();
       }
 
-      // 重構：四肢肌肉完全扎根於軀幹的自然和諧像素馬
+      // 重構：前腿與胸膛身體扎實相連、完全消除分離縫隙的像素馬
       function drawNaturalWalkingHorse(x, y, scale) {
         ctx.save();
         ctx.translate(x, y);
@@ -1451,20 +1450,20 @@
           }
         }
 
-        // 1. 馬尾（自然貼附在後臀部）
+        // 1. 馬尾
         ctx.fillStyle = '#220f08';
         ctx.fillRect(-22, -30 + bob, 5, 20);
 
-        // 2. 肌肉大腿內根（前腿根部與臀部大腿肌肉，完全消除分離縫隙）
+        // 2. 肌肉根部：加厚並延伸胸肩根部，讓前腿直接從厚實前胸向下扎實生長
         ctx.fillStyle = '#6b351a';
-        ctx.fillRect(-17, -22 + bob, 9, 12); // 後臀大腿根
-        ctx.fillRect(8, -22 + bob, 9, 12);  // 前肩胸部根
+        ctx.fillRect(-17, -22 + bob, 9, 13); // 後臀大腿根
+        ctx.fillRect(6, -24 + bob, 14, 15);  // 前胸前肩根（加寬加厚，徹底融合）
 
         // 3. 軀幹主體
         ctx.fillStyle = '#7a3e21';
-        ctx.fillRect(-18, -32 + bob, 36, 19);
+        ctx.fillRect(-18, -32 + bob, 38, 20);
         ctx.fillStyle = '#632f17';
-        ctx.fillRect(-16, -17 + bob, 32, 5); // 腹部深色陰影
+        ctx.fillRect(-16, -17 + bob, 34, 6); // 腹部深色陰影
 
         // 4. 頸部
         ctx.fillStyle = '#7a3e21';
@@ -1487,32 +1486,32 @@
         ctx.fillStyle = '#1c0b05';
         ctx.fillRect(32, -43 + bob, 2.5, 2.5); // 鼻孔
 
-        // 像素黑馬眼（溫潤自然）
+        // 自然溫和馬眼
         ctx.fillStyle = '#110502';
         ctx.fillRect(23, -46 + bob, 3, 3);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(23.5, -46 + bob, 1, 1); // 微小靈動反光
+        ctx.fillRect(23.5, -46 + bob, 1, 1);
 
         // 馬耳朵
         ctx.fillStyle = '#542611';
         ctx.fillRect(19, -53 + bob, 4, 6);
 
-        // 7. 四肢下段（直接自腿根自然延伸下伸，步態扎實貼地）
+        // 7. 四肢下段：前肢位置調整並直接由厚實前胸向下伸出，步伐和諧自然
         ctx.fillStyle = '#5c2d16';
-        // 右後小腿 & 左前小腿
-        ctx.fillRect(-14 + trot, -12 + bob, 4.5, 12);
-        ctx.fillRect(9 - trot, -12 + bob, 4.5, 12);
-        // 左後小腿 & 右前小腿
+        // 右後腿 & 左前腿
+        ctx.fillRect(-14 + trot, -11 + bob, 4.5, 12);
+        ctx.fillRect(8 - trot, -11 + bob, 5, 12);
+        // 左後腿 & 右前腿
         ctx.fillStyle = '#72371b';
-        ctx.fillRect(-7 - trot, -12 + bob, 4.5, 12);
-        ctx.fillRect(16 + trot, -12 + bob, 4.5, 12);
+        ctx.fillRect(-7 - trot, -11 + bob, 4.5, 12);
+        ctx.fillRect(14 + trot, -11 + bob, 5, 12);
 
-        // 馬蹄（貼齊地面 y = 0）
+        // 馬蹄
         ctx.fillStyle = '#180a04';
         ctx.fillRect(-14 + trot, 0, 4.5, 3);
-        ctx.fillRect(9 - trot, 0, 4.5, 3);
+        ctx.fillRect(8 - trot, 0, 5, 3);
         ctx.fillRect(-7 - trot, 0, 4.5, 3);
-        ctx.fillRect(16 + trot, 0, 4.5, 3);
+        ctx.fillRect(14 + trot, 0, 5, 3);
 
         ctx.restore();
       }
@@ -1619,14 +1618,14 @@
           }
         });
 
-        // ==================== 4. 房子 (招牌更名：윈터, PONYO, 민정) ====================
+        // ==================== 4. 房子 (招牌更名：윈터, Pponyo, 민정) ====================
         const barnBaseW = isMobile ? 96 : 138;
         barnsData.forEach((b, idx) => {
           const bx = w * b.xRatio;
           drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
         });
 
-        // ==================== 5. 狗與馬 (小馬肢體身軀自然諧調) ====================
+        // ==================== 5. 狗與馬 (小馬前腿胸部自然緊密) ====================
         const dogScale = ((ranchConfig.characters.dog.scale || 130) / 100) * (isMobile ? 1.25 : 1.35);
         const horseScale = ((ranchConfig.characters.horse.scale || 120) / 100) * (isMobile ? 1.0 : 1.2);
 
