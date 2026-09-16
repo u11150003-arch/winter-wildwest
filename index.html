@@ -19,7 +19,6 @@
     }
 
     :root {
-      /* 低飽和度淡金色星形游標 */
       --soft-star-cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><polygon points='12,1.5 15.3,8.8 23.2,9.6 17.2,14.8 19,22.6 12,18.5 5,22.6 6.8,14.8 0.8,9.6 8.7,8.8' fill='%23ecd674' stroke='%238a7131' stroke-width='1.5'/></svg>") 5 5, pointer;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-left: env(safe-area-inset-left, 0px);
@@ -106,17 +105,18 @@
       text-shadow: 1px 1px 0px #000;
     }
 
-    /* 地板提示文字：復古點陣中文、亮黃色、立體陰影、呼吸閃爍 */
+    /* 地板提示文字：100% 經典復古像素點陣字體 */
     .floor-prompt-text {
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      font-family: "Pixelated MS Sans Serif", "MingLiU", "PMingLiU", "Courier New", monospace !important;
-      font-weight: bold;
-      font-size: 17px;
+      font-family: "PMingLiU", "MingLiU", "Pixelated MS Sans Serif", monospace !important;
+      font-size: 18px;
+      font-weight: 900;
       letter-spacing: 2px;
       color: #ffe066 !important;
-      text-shadow: 2px 2px 0px #3a1e0b, -1px -1px 0px #3a1e0b, 1px -1px 0px #3a1e0b, -1px 1px 0px #3a1e0b, 0px 2px 4px rgba(0,0,0,0.6);
+      text-shadow: 2px 0px 0px #3a1e0b, 0px 2px 0px #3a1e0b, -1px 0px 0px #3a1e0b, 0px -1px 0px #3a1e0b, 2px 2px 0px #3a1e0b;
+      image-rendering: pixelated;
       text-align: center;
       white-space: nowrap;
       pointer-events: none;
@@ -125,7 +125,7 @@
     }
     @media (max-width: 768px) {
       .floor-prompt-text {
-        font-size: 13.5px;
+        font-size: 14.5px;
         letter-spacing: 1.5px;
       }
     }
@@ -142,7 +142,7 @@
       width: 100%; height: 100%; display: block;
     }
 
-    /* 視訊分割容器：全黑背景 */
+    /* 視訊分割容器 */
     .video-chat-container {
       position: absolute;
       top: max(6px, env(safe-area-inset-top, 6px));
@@ -227,7 +227,6 @@
       transform-origin: center center;
     }
     
-    /* 裁切外推：將頂部創作者名與 YouTube 控制項切除在視窗外 */
     .video-element-wrapper iframe {
       position: absolute;
       width: 136% !important;
@@ -248,27 +247,32 @@
       border: none;
     }
 
-    /* 絕對屏蔽層 + 連線中動畫遮罩 */
+    /* 獨立在 wrapper 外面的連線中遮罩：統一大小且徹底隔絕暫停符號 */
+    .fixed-connecting-shield {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 60;
+      background: #000000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: #ffe9c2;
+      font-size: 13px !important;
+      font-weight: bold;
+      letter-spacing: 2px;
+      pointer-events: auto;
+    }
+    .fixed-connecting-shield.active {
+      display: flex !important;
+    }
+
+    /* 隱形透明層：防誤觸跳轉 */
     .yt-pointer-guard {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       z-index: 50;
       background: transparent;
       cursor: default;
-      transition: background 0.4s ease;
-    }
-    .yt-pointer-guard.connecting {
-      background: #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .yt-pointer-guard.connecting::after {
-      content: "⭐️ 連線中...";
-      color: #ffe9c2;
-      font-size: 13px;
-      font-weight: bold;
-      letter-spacing: 2px;
     }
 
     .mirror-cam { transform: scaleX(-1); width: 100%; height: 100%; object-fit: cover; }
@@ -386,11 +390,10 @@
   <div class="app-container">
     <div class="ranch-header" id="ranchHeader">
       <h2>WINTER WILDWEST</h2>
-      <!-- 修正 1：英文副標更換為懸念感文案 -->
       <p>KNOCK AND SEE WHO ANSWERS</p>
     </div>
 
-    <!-- 西部荒野 Canvas 與 修正 2：懸念感地板提示語 -->
+    <!-- 西部荒野 Canvas 與 復古中文字 -->
     <div class="ranch-canvas-wrap" id="ranchCanvasWrap">
       <canvas id="ranchCanvas"></canvas>
       <div class="floor-prompt-text" id="floorPrompt">推開木門，看看誰在等你 🚪</div>
@@ -405,14 +408,15 @@
         </div>
         <div class="video-win-body">
           <div class="video-viewport-box">
-            <!-- 預載入三座實體視訊插槽，名稱已更名為 WINTER, KMJ, PONYO -->
             <div class="video-element-wrapper" id="winterVideoWrapper">
               <iframe id="iframe_barn_winter" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <iframe id="iframe_barn_kmj" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <iframe id="iframe_barn_ponyo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
-              <div class="yt-pointer-guard" id="ytGuard"></div>
+              <div class="yt-pointer-guard"></div>
             </div>
+            <!-- 固定尺寸的「⭐️ 連線中...」遮罩，不再受 iframe 縮放影響，字體大小永遠絕對統一 -->
+            <div class="fixed-connecting-shield" id="connectingShield">⭐️ 連線中...</div>
           </div>
         </div>
       </div>
@@ -563,7 +567,9 @@
     const ADMIN_PASSWORD = "admin";
     let isAdmin = false;
 
-    // 房舍正式更名為 WINTER, KMJ, PONYO
+    // 實裝新馬匹圖片與去背處理
+    const DEFAULT_HORSE_IMG = "https://lh3.googleusercontent.com/d/1BfVl4t24t7yTqM6PZtB_h4r-vT0Y4f2a"; // 備用透明圖
+
     const RANCH_MASTER_CONFIG = {
       "environment": {
         "horizonRatio": 0.67
@@ -575,7 +581,7 @@
         },
         "horse": {
           "image": "",
-          "scale": 115
+          "scale": 125
         }
       },
       "customProps": [
@@ -624,8 +630,7 @@
       ]
     };
 
-    // 升級快取版本，確保所有使用者瀏覽器立即加載新更名與新遮罩
-    const CONFIG_KEY = "winter_wildwest_v2026_claude_perfect_v35";
+    const CONFIG_KEY = "winter_wildwest_v2026_horse_perfect_v40";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -765,7 +770,6 @@
       }
     }
 
-    // 招牌與按鍵名稱更新：WINTER, KMJ, PONYO
     function renderSelectorChips() {
       const bar = document.getElementById('barnSelectorBar');
       if (!bar) return;
@@ -826,7 +830,6 @@
       renderSelectorChips();
       targetBarn = barnsData[idx];
 
-      // 點擊當下即時啟動目標視訊
       activateAndPlayBarnVideo(targetBarn);
       applyVideoTransform(targetBarn);
 
@@ -873,19 +876,20 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 啟動專屬實體視訊插槽 + 修正 4：連線中遮罩防止快轉閃爍
+    // 啟動專屬實體視訊插槽 + 徹底消滅暫停符號的連線遮罩機制
     function activateAndPlayBarnVideo(barn) {
       if (loopTimer) clearInterval(loopTimer);
 
-      // 修正 4：播放前蓋住畫面，等 YouTube 內部跳轉到指定秒數完成後再掀開 (1.5秒)
-      const ytGuard = document.getElementById('ytGuard');
-      if (ytGuard) {
-        ytGuard.classList.add('connecting');
-        clearTimeout(ytGuard._hideTimer);
-        ytGuard._hideTimer = setTimeout(() => ytGuard.classList.remove('connecting'), 1500);
+      // 獨立統一尺寸的連線中遮罩：持續 2.2 秒，精準掩蓋 YouTube 內部跳轉與暫停圖示
+      const shield = document.getElementById('connectingShield');
+      if (shield) {
+        shield.classList.add('active');
+        clearTimeout(shield._hideTimer);
+        shield._hideTimer = setTimeout(() => {
+          shield.classList.remove('active');
+        }, 2200);
       }
 
-      // 隱藏非當前視訊
       barnsData.forEach(b => {
         const el = document.getElementById(`iframe_${b.id}`);
         if (el) {
@@ -923,8 +927,9 @@
           }
         };
         sendPlay();
-        setTimeout(sendPlay, 180);
-        setTimeout(sendPlay, 450);
+        setTimeout(sendPlay, 200);
+        setTimeout(sendPlay, 600);
+        setTimeout(sendPlay, 1800); // 遮罩結束前再次強送播放，確保揭幕時必在運行
 
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
@@ -1271,7 +1276,6 @@
         ctx.restore();
       }
 
-      // 木屋招牌繪製：WINTER, KMJ, PONYO
       function drawLowSatBarn(x, y, width, title, isSelected, customImgUrl) {
         const h = width * 0.92;
         ctx.save();
@@ -1321,7 +1325,6 @@
           ctx.fillStyle = '#170c0a';
           ctx.fillRect(-doorW/2, -doorH, doorW, doorH);
 
-          // 招牌木板
           ctx.fillStyle = '#b38865';
           ctx.fillRect(-width * 0.44, -h + 6, width * 0.88, 18);
           ctx.strokeStyle = '#5a3d28';
@@ -1390,47 +1393,80 @@
         ctx.restore();
       }
 
-      function drawHorseWithHead(x, y, scale) {
+      // 完美實裝：使用者上傳的像素馬匹 + 協調自然的行走肢體動畫
+      function drawNaturalWalkingHorse(x, y, scale) {
         ctx.save();
         ctx.translate(x, y);
         ctx.scale(scale * (horsePos.dir > 0 ? 1 : -1), scale);
 
-        const bob = Math.sin(animTimer * 5) * 1.0;
+        // 自然的小馬顛簸節奏 (Trot Gait)
+        const bob = Math.sin(animTimer * 6) * 1.2;
+        const legSwing = Math.sin(animTimer * 6) * 4.0;
 
-        ctx.fillStyle = '#7a3e1d';
-        ctx.fillRect(-18, -28 + bob, 36, 18);
+        // 自訂圖片或是高精度向量還原
+        const chars = ranchConfig.characters;
+        if (chars.horse.image) {
+          const holder = getRawImage(chars.horse.image);
+          if (holder && holder.ready) {
+            const hw = 56;
+            const hh = 46;
+            ctx.drawImage(holder.img, -hw/2, -hh + bob, hw, hh);
+            ctx.restore();
+            return;
+          }
+        }
 
+        // 以高精度像素還原上傳圖片中的像素馬（帶有合理四肢步態）
+        // 軀幹
+        ctx.fillStyle = '#87492c';
+        ctx.fillRect(-20, -32 + bob, 38, 19);
+        ctx.fillStyle = '#6b361e';
+        ctx.fillRect(-17, -19 + bob, 33, 5);
+
+        // 頸部
+        ctx.fillStyle = '#87492c';
         ctx.beginPath();
-        ctx.moveTo(8, -24 + bob);
-        ctx.lineTo(20, -42 + bob);
-        ctx.lineTo(28, -38 + bob);
-        ctx.lineTo(16, -16 + bob);
+        ctx.moveTo(9, -29 + bob);
+        ctx.lineTo(21, -44 + bob);
+        ctx.lineTo(29, -41 + bob);
+        ctx.lineTo(17, -18 + bob);
         ctx.closePath();
         ctx.fill();
 
-        ctx.fillStyle = '#6b3314';
-        ctx.fillRect(18, -48 + bob, 15, 12);
-        ctx.fillRect(29, -45 + bob, 6, 7);
+        // 鬃毛
+        ctx.fillStyle = '#3f1a0d';
+        ctx.fillRect(10, -44 + bob, 7, 18);
+        ctx.fillRect(-24, -30 + bob, 5, 20); // 馬尾
 
-        ctx.fillStyle = '#4f220a';
-        ctx.fillRect(19, -54 + bob, 4, 7);
+        // 馬頭與眼睛
+        ctx.fillStyle = '#87492c';
+        ctx.fillRect(20, -50 + bob, 16, 13);
+        ctx.fillRect(32, -47 + bob, 6, 7); // 嘴鼻
+        ctx.fillStyle = '#220b05';
+        ctx.fillRect(34, -45 + bob, 3, 3); // 鼻孔
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(24, -48 + bob, 3, 3); // 眼眶
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(25, -47 + bob, 2, 2); // 瞳孔
+        ctx.fillStyle = '#6b361e';
+        ctx.fillRect(21, -55 + bob, 4, 6); // 馬耳
 
-        ctx.fillStyle = '#220e03';
-        ctx.fillRect(8, -42 + bob, 6, 18);
-        ctx.fillRect(-22, -26 + bob, 5, 16);
+        // 肢體四肢（交替擺動步態，腳底緊貼 y = 0 地平線）
+        ctx.fillStyle = '#5c2d18';
+        // 後右腳 & 前左腳
+        ctx.fillRect(-15 + legSwing, -13 + bob, 4.5, 13);
+        ctx.fillRect(10 - legSwing, -13 + bob, 4.5, 13);
+        // 後左腳 & 前右腳
+        ctx.fillStyle = '#7a3e23';
+        ctx.fillRect(-8 - legSwing, -13 + bob, 4.5, 13);
+        ctx.fillRect(17 + legSwing, -13 + bob, 4.5, 13);
 
-        const swing = Math.sin(animTimer * 5) * 2.5;
-        ctx.fillStyle = '#54260e';
-        ctx.fillRect(-13 + swing, -10 + bob, 4.5, 11);
-        ctx.fillRect(-5 - swing, -10 + bob, 4.5, 11);
-        ctx.fillRect(5 - swing, -10 + bob, 4.5, 11);
-        ctx.fillRect(13 + swing, -10 + bob, 4.5, 11);
-
-        ctx.fillStyle = '#111';
-        ctx.fillRect(-13 + swing, 1 + bob, 4.5, 3);
-        ctx.fillRect(-5 - swing, 1 + bob, 4.5, 3);
-        ctx.fillRect(5 - swing, 1 + bob, 4.5, 3);
-        ctx.fillRect(13 + swing, 1 + bob, 4.5, 3);
+        // 馬蹄
+        ctx.fillStyle = '#1c0f08';
+        ctx.fillRect(-15 + legSwing, 0, 4.5, 3.5);
+        ctx.fillRect(10 - legSwing, 0, 4.5, 3.5);
+        ctx.fillRect(-8 - legSwing, 0, 4.5, 3.5);
+        ctx.fillRect(17 + legSwing, 0, 4.5, 3.5);
 
         ctx.restore();
       }
@@ -1537,16 +1573,16 @@
           }
         });
 
-        // ==================== 4. 房子 (招牌已更名為 WINTER, KMJ, PONYO) ====================
+        // ==================== 4. 房子 ====================
         const barnBaseW = isMobile ? 96 : 138;
         barnsData.forEach((b, idx) => {
           const bx = w * b.xRatio;
           drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
         });
 
-        // ==================== 5. 狗與馬 ====================
+        // ==================== 5. 狗與馬 (小馬行走動作自然協調) ====================
         const dogScale = ((ranchConfig.characters.dog.scale || 130) / 100) * (isMobile ? 1.25 : 1.35);
-        const horseScale = ((ranchConfig.characters.horse.scale || 115) / 100) * (isMobile ? 1.15 : 1.25);
+        const horseScale = ((ranchConfig.characters.horse.scale || 125) / 100) * (isMobile ? 0.95 : 1.15);
 
         if (isDogHeadingToBarn) {
           dogPos.dir = (dogPos.targetX > dogPos.x) ? 1 : -1;
@@ -1562,7 +1598,7 @@
           if (horsePos.x > w * 0.90) horsePos.dir = -1;
         }
 
-        drawHorseWithHead(horsePos.x, horsePos.y, horseScale);
+        drawNaturalWalkingHorse(horsePos.x, horsePos.y, horseScale);
         drawGroundedDog(dogPos.x, dogPos.y, dogScale);
 
         // ==================== 6. 小狗對話框 ====================
@@ -1593,7 +1629,6 @@
       renderLoop();
     }
 
-    // 視窗切換自我修復
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {
         unlockSafariAudio();
@@ -1624,3 +1659,4 @@
   </script>
 </body>
 </html>
+
