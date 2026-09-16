@@ -19,6 +19,7 @@
     }
 
     :root {
+      /* 低飽和度淡金色星形游標 */
       --soft-star-cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><polygon points='12,1.5 15.3,8.8 23.2,9.6 17.2,14.8 19,22.6 12,18.5 5,22.6 6.8,14.8 0.8,9.6 8.7,8.8' fill='%23ecd674' stroke='%238a7131' stroke-width='1.5'/></svg>") 5 5, pointer;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-left: env(safe-area-inset-left, 0px);
@@ -31,7 +32,8 @@
       width: 100vw; height: 100vh;
       overflow: hidden;
       background: #7b9cb0;
-      font-family: "Pixelated MS Sans Serif", "Courier New", "GulimChe", monospace, sans-serif !important;
+      /* 韓文與中英通用經典點陣字體 */
+      font-family: "GulimChe", "DotumChe", "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
       cursor: default;
       transition: background 0.25s ease;
     }
@@ -45,7 +47,7 @@
     }
 
     button, a, .start-menu li {
-      font-family: "Pixelated MS Sans Serif", "Courier New", monospace, sans-serif !important;
+      font-family: "GulimChe", "DotumChe", "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
     }
 
     /* 頂部管理列 */
@@ -97,6 +99,7 @@
       z-index: 10;
       pointer-events: none;
     }
+    /* 手機端大標題字體顯著放大 */
     .ranch-header h2 {
       margin: 0;
       font-size: 24px;
@@ -261,7 +264,7 @@
       border: none;
     }
 
-    /* 統一大小連線中遮罩：持續4.8秒 */
+    /* 統一大小連線中遮罩：持續 5.0 秒 */
     .fixed-connecting-shield {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -437,7 +440,7 @@
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline></video>
               <div class="yt-pointer-guard"></div>
             </div>
-            <!-- 遮罩時間改為 4.8 秒 (4800ms) -->
+            <!-- 遮罩時間 5 秒 -->
             <div class="fixed-connecting-shield" id="connectingShield">⭐️ 連線中...</div>
           </div>
         </div>
@@ -589,6 +592,7 @@
     const ADMIN_PASSWORD = "admin";
     let isAdmin = false;
 
+    // 房舍配置：윈터, Pponyo, 민정
     const RANCH_MASTER_CONFIG = {
       "environment": {
         "horizonRatio": 0.67
@@ -652,7 +656,8 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_no_loop_reset_v95";
+    // 升級版本快取至流暢不跳針版本
+    const CONFIG_KEY = "winter_wildwest_v2026_smooth_start_v100";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -789,6 +794,7 @@
       }
     }
 
+    // 按鍵標籤：Pponyo 採用與其他英文一致的 Pixelated MS Sans Serif
     function renderSelectorChips() {
       const bar = document.getElementById('barnSelectorBar');
       if (!bar) return;
@@ -896,7 +902,7 @@
     }
 
     // ==============================================================
-    // 播放引擎：點擊重頭開始、播放結束自然停止、絕不自動循環跳針
+    // 播放引擎：流暢單次啟動（消除重複 seekTo 跳針）+ 5 秒連線遮罩 + 播畢自然停止
     // ==============================================================
     function activateAndPlayBarnVideo(barn) {
       if (endStopTimer) clearTimeout(endStopTimer);
@@ -907,6 +913,7 @@
         clearTimeout(shield._hideTimer);
       }
 
+      // 暫停並隱藏其他非當前視訊
       barnsData.forEach(b => {
         const el = document.getElementById(`iframe_${b.id}`);
         if (el) {
@@ -929,36 +936,31 @@
         directVideo.pause(); directVideo.style.display = 'none';
         activeIframe.classList.add('active-video');
 
-        // 徹底移除 loop=1 與 playlist 循環參數，防止電腦版自動跳針
         let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1`;
         if (startSec > 0) srcUrl += `&start=${startSec}`;
 
-        if (!activeIframe.src || activeIframe.src.indexOf(ytId) === -1) {
-          activeIframe.src = srcUrl;
-        }
+        // 每次切換重新賦值，使 YouTube 原生乾淨從指定秒數載入，杜絕中途跳針
+        activeIframe.src = srcUrl;
 
-        // 每次點擊皆強行回到起始秒數重新播放
-        const restartFromStart = () => {
+        // 單次平滑指令：不再反覆發送 seekTo 造成來回卡頓
+        const startSinglePlay = () => {
           if (activeIframe.contentWindow) {
-            activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [startSec, true] }), '*');
             activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
             activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
           }
         };
 
-        restartFromStart();
-        setTimeout(restartFromStart, 250);
-        setTimeout(restartFromStart, 800);
-        setTimeout(restartFromStart, 2200);
+        setTimeout(startSinglePlay, 400);
 
+        // 遮罩精準維持 5 秒 (5000ms)，確保跳轉結束後順暢揭幕
         if (shield) {
           shield._hideTimer = setTimeout(() => {
-            restartFromStart();
+            startSinglePlay();
             shield.classList.remove('active');
-          }, 4800);
+          }, 5000);
         }
 
-        // 若有設定結束秒數，到達時自然暫停停止，絕不自動跳回
+        // 若有設定結束秒數，到達時自然暫停停止，不自動循環
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
           endStopTimer = setTimeout(() => {
@@ -972,12 +974,12 @@
         activeIframe.classList.add('active-video');
         activeIframe.src = `https://drive.google.com/file/d/${driveId}/preview`;
         if (shield) {
-          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 1500);
+          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 5000);
         }
       } else {
         if (activeIframe) activeIframe.classList.remove('active-video');
         directVideo.style.display = 'block';
-        directVideo.loop = false; // 關閉循環
+        directVideo.loop = false;
         directVideo.src = barn.videoUrl;
         directVideo.currentTime = startSec;
         directVideo.muted = false;
@@ -990,13 +992,12 @@
           });
         }
 
-        // 播放完畢自然停止，等待使用者下次操作
         directVideo.onended = () => {
           directVideo.pause();
         };
 
         if (shield) {
-          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 1200);
+          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 5000);
         }
       }
     }
@@ -1321,6 +1322,7 @@
         ctx.restore();
       }
 
+      // 木屋招牌繪製：Pponyo 採用復古等寬電腦英文，韓文使用復古點陣
       function drawLowSatBarn(x, y, width, title, isSelected, customImgUrl, isKorean) {
         const h = width * 0.92;
         ctx.save();
@@ -1370,6 +1372,7 @@
           ctx.fillStyle = '#170c0a';
           ctx.fillRect(-doorW/2, -doorH, doorW, doorH);
 
+          // 招牌木板
           ctx.fillStyle = '#b38865';
           ctx.fillRect(-width * 0.44, -h + 6, width * 0.88, 18);
           ctx.strokeStyle = '#5a3d28';
@@ -1442,6 +1445,7 @@
         ctx.restore();
       }
 
+      // 自然前腿相連像素馬
       function drawNaturalWalkingHorse(x, y, scale) {
         ctx.save();
         ctx.translate(x, y);
@@ -1462,18 +1466,22 @@
           }
         }
 
+        // 1. 馬尾
         ctx.fillStyle = '#220f08';
         ctx.fillRect(-22, -30 + bob, 5, 20);
 
+        // 2. 肌肉根部：胸肩根部加厚，前腿直接自深色胸膛向下生長
         ctx.fillStyle = '#6b351a';
         ctx.fillRect(-17, -22 + bob, 9, 13);
         ctx.fillRect(6, -24 + bob, 14, 15);
 
+        // 3. 軀幹主體
         ctx.fillStyle = '#7a3e21';
         ctx.fillRect(-18, -32 + bob, 38, 20);
         ctx.fillStyle = '#632f17';
         ctx.fillRect(-16, -17 + bob, 34, 6);
 
+        // 4. 頸部
         ctx.fillStyle = '#7a3e21';
         ctx.beginPath();
         ctx.moveTo(8, -28 + bob);
@@ -1483,9 +1491,11 @@
         ctx.closePath();
         ctx.fill();
 
+        // 5. 鬃毛
         ctx.fillStyle = '#220f08';
         ctx.fillRect(8, -43 + bob, 7, 18);
 
+        // 6. 馬頭與眼睛
         ctx.fillStyle = '#7a3e21';
         ctx.fillRect(18, -48 + bob, 15, 12);
         ctx.fillRect(29, -45 + bob, 6, 7);
@@ -1500,6 +1510,7 @@
         ctx.fillStyle = '#542611';
         ctx.fillRect(19, -53 + bob, 4, 6);
 
+        // 7. 四肢下段
         ctx.fillStyle = '#5c2d16';
         ctx.fillRect(-14 + trot, -11 + bob, 4.5, 12);
         ctx.fillRect(8 - trot, -11 + bob, 5, 12);
@@ -1508,6 +1519,7 @@
         ctx.fillRect(-7 - trot, -11 + bob, 4.5, 12);
         ctx.fillRect(14 + trot, -11 + bob, 5, 12);
 
+        // 馬蹄
         ctx.fillStyle = '#180a04';
         ctx.fillRect(-14 + trot, 0, 4.5, 3);
         ctx.fillRect(8 - trot, 0, 5, 3);
