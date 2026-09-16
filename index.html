@@ -27,7 +27,6 @@
       --taskbar-h: calc(38px + var(--safe-bottom));
     }
 
-    /* 預設頂部為天空藍，進入視訊後切為純黑 */
     html, body {
       margin: 0; padding: 0;
       width: 100vw; height: 100vh;
@@ -107,7 +106,7 @@
       text-shadow: 1px 1px 0px #000;
     }
 
-    /* 地板提示文字：復古點陣中文字體、亮黃色、立體陰影、呼吸閃爍效果 */
+    /* 地板提示文字：復古點陣中文字體、亮黃色、立體陰影、呼吸閃爍 */
     .floor-prompt-text {
       position: absolute;
       left: 50%;
@@ -222,11 +221,11 @@
       transform-origin: center center;
     }
     
-    /* 裁切外推：將頂部創作者名與 YouTube 控制項移至螢幕可視區外 */
+    /* 裁剪技術：徹底消除 YouTube 介面與黑線 */
     .video-element-wrapper iframe {
       position: absolute;
-      width: 136% !important;
-      height: 136% !important;
+      width: 138% !important;
+      height: 138% !important;
       top: 50% !important;
       left: 50% !important;
       transform: translate(-50%, -50%) !important;
@@ -237,6 +236,16 @@
       height: 100%;
       object-fit: contain;
       border: none;
+    }
+
+    /* 絕對屏蔽層：禁止使用者暫停、禁止跳轉至 YouTube */
+    .yt-pointer-guard {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 50;
+      background: transparent;
+      pointer-events: auto !important;
+      cursor: default;
     }
 
     .mirror-cam { transform: scaleX(-1); width: 100%; height: 100%; object-fit: cover; }
@@ -375,6 +384,8 @@
             <div class="video-element-wrapper" id="winterVideoWrapper">
               <iframe id="winterVideoIframe" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
+              <!-- 雙層絕對保護層：防暫停、防跳轉至 YouTube、杜絕紅色按鈕殘留 -->
+              <div class="yt-pointer-guard" id="ytGuard"></div>
             </div>
           </div>
         </div>
@@ -586,7 +597,7 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_clean_sound_v17";
+    const CONFIG_KEY = "winter_wildwest_v2026_super_sound_v18";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -725,7 +736,6 @@
       sceneZoomScale = 1;
       targetBarn = null;
 
-      // 切換回頂部藍色狀態
       document.body.classList.remove('in-video-call');
       const meta = document.getElementById('themeColorMeta');
       if (meta) meta.setAttribute('content', '#7b9cb0');
@@ -739,15 +749,16 @@
       renderSelectorChips();
     }
 
-    // 點擊觸發：利用使用者點擊時的合法事件瞬間解鎖音訊並開始播放
+    // 關鍵：在使用者點擊的同一個 Call Stack 中完成音訊激活與播放加載
     function selectBarnAndMove(idx) {
       activeBarnIndex = idx;
       renderSelectorChips();
       targetBarn = barnsData[idx];
 
-      // 第一時間啟動有聲播放
+      // 1. 同步啟動有聲影片
       playWinterVideoDirectWithSound(targetBarn);
 
+      // 2. 啟動平滑拉近與鑽門
       const canvas = document.getElementById('ranchCanvas');
       const w = canvas.width;
       const h = canvas.height;
@@ -791,7 +802,7 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 突破 Safari 黑屏、保證一點擊即開啟聲音播放的核心機制
+    // 極速有聲播放引擎：直接穿透 Safari 限制，絕不露出紅色播放鍵與暫停圖示
     function playWinterVideoDirectWithSound(barn) {
       const url = barn.videoUrl;
       const iframe = document.getElementById('winterVideoIframe');
@@ -810,17 +821,29 @@
         directVideo.pause(); directVideo.src = ''; directVideo.style.display = 'none';
         iframe.style.display = 'block';
 
-        // 乾淨且通過所有瀏覽器嚴格驗證的有聲自動播參數 (包含 loop 與 start)
-        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}`;
+        // 參數注入：mute=0, autoplay=1, playsinline=1, controls=0
+        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}&enablejsapi=1`;
         if (startSec > 0) srcUrl += `&start=${startSec}`;
         if (endSec > startSec) srcUrl += `&end=${endSec}`;
 
         iframe.src = srcUrl;
 
+        // 連續發送信號確保解除暫停與音訊限制
+        const forcePlay = () => {
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
+            iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+          }
+        };
+        setTimeout(forcePlay, 200);
+        setTimeout(forcePlay, 600);
+        setTimeout(forcePlay, 1200);
+
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
           loopTimer = setInterval(() => {
             iframe.src = srcUrl;
+            setTimeout(forcePlay, 200);
           }, duration);
         }
       } else if (driveId) {
@@ -832,7 +855,7 @@
         directVideo.style.display = 'block';
         directVideo.loop = (endSec <= startSec);
         directVideo.src = url;
-        directVideo.muted = false; // 直接開啟聲音
+        directVideo.muted = false;
         
         const p = directVideo.play();
         if (p !== undefined) {
@@ -1101,7 +1124,6 @@
 
         const horizonY = canvas.height * (ranchConfig.environment.horizonRatio || 0.67);
 
-        // 提示文字垂直正中對齊地表
         const promptEl = document.getElementById('floorPrompt');
         if (promptEl) {
           promptEl.style.top = (horizonY + (canvas.height - horizonY) * 0.44) + 'px';
@@ -1437,14 +1459,14 @@
           }
         });
 
-        // ==================== 4. 房子 (等比例放大) ====================
+        // ==================== 4. 房子 ====================
         const barnBaseW = isMobile ? 96 : 138;
         barnsData.forEach((b, idx) => {
           const bx = w * b.xRatio;
           drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
         });
 
-        // ==================== 5. 狗與馬 (小狗下移與小馬同水平線) ====================
+        // ==================== 5. 狗與馬 ====================
         const dogScale = ((ranchConfig.characters.dog.scale || 130) / 100) * (isMobile ? 1.25 : 1.35);
         const horseScale = ((ranchConfig.characters.horse.scale || 115) / 100) * (isMobile ? 1.15 : 1.25);
 
@@ -1465,7 +1487,7 @@
         drawHorseWithHead(horsePos.x, horsePos.y, horseScale);
         drawGroundedDog(dogPos.x, dogPos.y, dogScale);
 
-        // ==================== 6. 小狗對話框 (每15秒淡入淡出顯示3秒，輪流交替) ====================
+        // ==================== 6. 小狗對話框 ====================
         const cycleTime = 15;
         const showDuration = 3.0;
         const fadeTime = 0.4;
