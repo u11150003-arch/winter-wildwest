@@ -32,7 +32,8 @@
       width: 100vw; height: 100vh;
       overflow: hidden;
       background: #7b9cb0;
-      font-family: "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
+      /* 韓文與中英通用經典點陣字體 */
+      font-family: "GulimChe", "DotumChe", "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
       cursor: default;
       transition: background 0.25s ease;
     }
@@ -46,10 +47,10 @@
     }
 
     button, a, .start-menu li {
-      font-family: "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
+      font-family: "GulimChe", "DotumChe", "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
     }
 
-    /* 頂部管理選單列：平時完全隱藏，管理員模式時才於上方浮現 */
+    /* 頂部管理列 */
     .top-bar-wrapper {
       position: absolute;
       top: max(6px, env(safe-area-inset-top, 6px));
@@ -98,13 +99,21 @@
       z-index: 10;
       pointer-events: none;
     }
+    /* 手機端 WINTER WILDWEST 顯著放大 */
     .ranch-header h2 {
       margin: 0;
-      font-size: 23px;
+      font-size: 24px;
       letter-spacing: 3px;
       color: #fff3b0;
       text-shadow: 2px 2px 0px #4d2e18, 0 0 10px rgba(0,0,0,0.5);
       font-family: "Courier New", monospace, sans-serif;
+    }
+    @media (max-width: 768px) {
+      .ranch-header h2 {
+        font-size: 27px !important;
+        letter-spacing: 3.5px;
+        text-shadow: 2.5px 2.5px 0px #4d2e18, 0 0 12px rgba(0,0,0,0.6);
+      }
     }
     .ranch-header p {
       margin: 3px 0 0;
@@ -114,7 +123,7 @@
       text-shadow: 1px 1px 0px #000;
     }
 
-    /* 地板提示文字：Windows 98 復古字體風格 */
+    /* 地板提示文字 */
     .floor-prompt-text {
       position: absolute;
       left: 50%;
@@ -255,7 +264,7 @@
       border: none;
     }
 
-    /* 統一尺寸的「⭐️ 連線中...」動態遮罩：徹底消滅暫停符號 */
+    /* 統一大小連線中遮罩：秒數延長，徹底消滅跳轉暫停符號 */
     .fixed-connecting-shield {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -269,7 +278,7 @@
       font-weight: bold;
       letter-spacing: 2px;
       pointer-events: auto;
-      transition: opacity 0.3s ease;
+      transition: opacity 0.4s ease;
       opacity: 0;
       visibility: hidden;
     }
@@ -278,7 +287,6 @@
       visibility: visible;
     }
 
-    /* 頂層防誤觸層：禁止點擊跳轉到 YouTube */
     .yt-pointer-guard {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -322,6 +330,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
       transition: all 0.2s ease;
       white-space: nowrap;
+      font-family: "GulimChe", "DotumChe", monospace, sans-serif !important;
     }
     .barn-chip:hover {
       background: #a45d2d !important;
@@ -387,7 +396,7 @@
 </head>
 <body onclick="handleGlobalClick(event)">
 
-  <!-- 頂部管理工具列（管理員登入後才展開） -->
+  <!-- 頂部管理工具列（點擊開始選單中的「切換管理員模式」才展開，平時不阻擋視野） -->
   <div class="top-bar-wrapper" id="topBarWrapper">
     <div class="top-actions-viewport" id="topActionsViewport">
       <button onclick="toggleAdmin(event)">🔓 退出管理</button>
@@ -423,12 +432,12 @@
           <div class="video-viewport-box">
             <div class="video-element-wrapper" id="winterVideoWrapper">
               <iframe id="iframe_barn_winter" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-              <iframe id="iframe_barn_kmj" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <iframe id="iframe_barn_ponyo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+              <iframe id="iframe_barn_minjeong" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
               <div class="yt-pointer-guard"></div>
             </div>
-            <!-- 固定大小的「⭐️ 連線中...」遮罩，監聽播放狀態精確揭開，絕不露出暫停符號 -->
+            <!-- 遮罩時間延長，100% 蓋住跳轉與暫停鍵 -->
             <div class="fixed-connecting-shield" id="connectingShield">⭐️ 連線中...</div>
           </div>
         </div>
@@ -557,7 +566,6 @@
         🐎 <strong>3. 返回西部荒野全景</strong>
       </li>
       <hr style="margin:4px 0;">
-      <!-- 點此切換管理員模式，不在畫面上方佔空間 -->
       <li onclick="toggleAdmin(event); toggleStartMenu(event);">⚙️ 切換管理員模式</li>
     </ul>
   </div>
@@ -581,6 +589,7 @@
     const ADMIN_PASSWORD = "admin";
     let isAdmin = false;
 
+    // 房舍正式更名為：윈터, PONYO, 민정 (韓文復古點陣支援)
     const RANCH_MASTER_CONFIG = {
       "environment": {
         "horizonRatio": 0.67
@@ -616,23 +625,23 @@
       "barns": [
         {
           "id": "barn_winter",
-          "name": "WINTER",
+          "name": "윈터",
           "customImg": "",
           "xRatio": 0.18,
           "videoUrl": "https://youtu.be/dVhNMMejAtA?si=3hNsInSYm_CyfAcF",
           "adjust": { "scale": 146, "x": 50, "y": 50, "start": 0, "end": 0 }
         },
         {
-          "id": "barn_kmj",
-          "name": "KMJ",
+          "id": "barn_ponyo",
+          "name": "PONYO",
           "customImg": "",
           "xRatio": 0.50,
           "videoUrl": "https://youtu.be/Nxybqp22WNI?si=BnwmB_4uMEmIqO1a",
           "adjust": { "scale": 146, "x": 44, "y": 50, "start": 0, "end": 0 }
         },
         {
-          "id": "barn_ponyo",
-          "name": "PONYO",
+          "id": "barn_minjeong",
+          "name": "민정",
           "customImg": "",
           "xRatio": 0.82,
           "videoUrl": "https://youtu.be/nOA1qS4AaiQ?si=aNod6kn17hyqYDTK",
@@ -641,7 +650,8 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_perfect_fix_final_v50";
+    // 升級版本快取，立即載入韓文更名與強化遮罩
+    const CONFIG_KEY = "winter_wildwest_v2026_korean_long_shield_v60";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -667,7 +677,6 @@
 
     let dogBubbleTimer = 0;
 
-    // Web Audio 授權解鎖
     let audioContextUnlocked = false;
     function unlockSafariAudio() {
       if (audioContextUnlocked) return;
@@ -766,7 +775,6 @@
       if (isAdmin) {
         isAdmin = false;
         document.body.classList.remove('admin-mode');
-        document.querySelectorAll('.modal-win').forEach(m => m.style.display = 'none');
         alert("已退出管理員模式");
       } else {
         const input = prompt("請輸入管理員密碼：");
@@ -780,6 +788,7 @@
       }
     }
 
+    // 按鍵標籤更新：윈터, PONYO, 민정
     function renderSelectorChips() {
       const bar = document.getElementById('barnSelectorBar');
       if (!bar) return;
@@ -886,15 +895,13 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // ==============================================================
-    // 徹底消除暫停符號：精確監聽 YouTube 播放訊號揭幕
-    // ==============================================================
+    // 遮罩時間延長整整 3 秒（由 2.2 秒延長至 5.2 秒），徹底覆蓋跳轉與暫停鍵
     function activateAndPlayBarnVideo(barn) {
       if (loopTimer) clearInterval(loopTimer);
 
       const shield = document.getElementById('connectingShield');
       if (shield) {
-        shield.classList.add('active'); // 立即拉起純黑連線遮罩
+        shield.classList.add('active');
         clearTimeout(shield._hideTimer);
       }
 
@@ -928,7 +935,6 @@
           activeIframe.src = srcUrl;
         }
 
-        // 發送有聲播放與跳轉
         const sendPlay = () => {
           if (activeIframe.contentWindow) {
             activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
@@ -936,15 +942,16 @@
           }
         };
         sendPlay();
-        setTimeout(sendPlay, 250);
-        setTimeout(sendPlay, 700);
+        setTimeout(sendPlay, 300);
+        setTimeout(sendPlay, 1000);
+        setTimeout(sendPlay, 2500);
 
-        // 徹底防範暫停圖示：等待 2.6 秒確保影片完全處於播映狀態，再優雅揭開黑幕
+        // 延長 3 秒（總時長 5.2 秒），確認 YouTube 內部跳轉重繪全數完成後才掀開黑幕
         if (shield) {
           shield._hideTimer = setTimeout(() => {
             sendPlay();
             shield.classList.remove('active');
-          }, 2600);
+          }, 5200);
         }
 
         if (endSec > startSec) {
@@ -961,7 +968,7 @@
         activeIframe.classList.add('active-video');
         activeIframe.src = `https://drive.google.com/file/d/${driveId}/preview`;
         if (shield) {
-          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 1200);
+          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 1500);
         }
       } else {
         if (activeIframe) activeIframe.classList.remove('active-video');
@@ -978,7 +985,7 @@
           });
         }
         if (shield) {
-          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 800);
+          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 1200);
         }
       }
     }
@@ -1303,6 +1310,7 @@
         ctx.restore();
       }
 
+      // 木屋招牌繪製：支援韓文復古點陣 (윈터, PONYO, 민정)
       function drawLowSatBarn(x, y, width, title, isSelected, customImgUrl) {
         const h = width * 0.92;
         ctx.save();
@@ -1352,6 +1360,7 @@
           ctx.fillStyle = '#170c0a';
           ctx.fillRect(-doorW/2, -doorH, doorW, doorH);
 
+          // 招牌木板
           ctx.fillStyle = '#b38865';
           ctx.fillRect(-width * 0.44, -h + 6, width * 0.88, 18);
           ctx.strokeStyle = '#5a3d28';
@@ -1359,9 +1368,10 @@
           ctx.strokeRect(-width * 0.44, -h + 6, width * 0.88, 18);
 
           ctx.fillStyle = '#2d180d';
-          ctx.font = 'bold 10px monospace';
+          // 韓文字型設定為復古點陣
+          ctx.font = 'bold 10.5px "GulimChe", "DotumChe", monospace, sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText(title, 0, -h + 18);
+          ctx.fillText(title, 0, -h + 19);
         }
 
         ctx.restore();
@@ -1420,7 +1430,7 @@
         ctx.restore();
       }
 
-      // 經典像素馬：身形比例協調、深色眼眸與四肢步態自然結合
+      // 重構：四肢肌肉完全扎根於軀幹的自然和諧像素馬
       function drawNaturalWalkingHorse(x, y, scale) {
         ctx.save();
         ctx.translate(x, y);
@@ -1429,7 +1439,6 @@
         const bob = Math.sin(animTimer * 5.5) * 1.0;
         const trot = Math.sin(animTimer * 5.5) * 3.5;
 
-        // 檢查是否有自訂小馬圖片
         const chars = ranchConfig.characters;
         if (chars.horse.image) {
           const holder = getRawImage(chars.horse.image);
@@ -1442,17 +1451,22 @@
           }
         }
 
-        // 1. 馬尾
+        // 1. 馬尾（自然貼附在後臀部）
         ctx.fillStyle = '#220f08';
-        ctx.fillRect(-22, -30 + bob, 5, 19);
+        ctx.fillRect(-22, -30 + bob, 5, 20);
 
-        // 2. 軀幹主體
+        // 2. 肌肉大腿內根（前腿根部與臀部大腿肌肉，完全消除分離縫隙）
+        ctx.fillStyle = '#6b351a';
+        ctx.fillRect(-17, -22 + bob, 9, 12); // 後臀大腿根
+        ctx.fillRect(8, -22 + bob, 9, 12);  // 前肩胸部根
+
+        // 3. 軀幹主體
         ctx.fillStyle = '#7a3e21';
         ctx.fillRect(-18, -32 + bob, 36, 19);
         ctx.fillStyle = '#632f17';
-        ctx.fillRect(-16, -18 + bob, 32, 5); // 腹部陰影
+        ctx.fillRect(-16, -17 + bob, 32, 5); // 腹部深色陰影
 
-        // 3. 頸部
+        // 4. 頸部
         ctx.fillStyle = '#7a3e21';
         ctx.beginPath();
         ctx.moveTo(8, -28 + bob);
@@ -1462,37 +1476,38 @@
         ctx.closePath();
         ctx.fill();
 
-        // 4. 鬃毛
+        // 5. 鬃毛
         ctx.fillStyle = '#220f08';
         ctx.fillRect(8, -43 + bob, 7, 18);
 
-        // 5. 馬頭與自然黑眼
+        // 6. 馬頭與自然溫潤馬眼
         ctx.fillStyle = '#7a3e21';
         ctx.fillRect(18, -48 + bob, 15, 12);
         ctx.fillRect(29, -45 + bob, 6, 7); // 嘴吻
         ctx.fillStyle = '#1c0b05';
         ctx.fillRect(32, -43 + bob, 2.5, 2.5); // 鼻孔
-        // 溫和自然的馬眼
+
+        // 像素黑馬眼（溫潤自然）
         ctx.fillStyle = '#110502';
         ctx.fillRect(23, -46 + bob, 3, 3);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(23.5, -46 + bob, 1, 1); // 微小高光
+        ctx.fillRect(23.5, -46 + bob, 1, 1); // 微小靈動反光
 
         // 馬耳朵
         ctx.fillStyle = '#542611';
         ctx.fillRect(19, -53 + bob, 4, 6);
 
-        // 6. 四肢（骨架相連、交錯擺動、腳底切齊 y = 0）
+        // 7. 四肢下段（直接自腿根自然延伸下伸，步態扎實貼地）
         ctx.fillStyle = '#5c2d16';
-        // 右後腿 & 左前腿
-        ctx.fillRect(-14 + trot, -13 + bob, 4.5, 13);
-        ctx.fillRect(9 - trot, -13 + bob, 4.5, 13);
-        // 左後腿 & 右前腿
+        // 右後小腿 & 左前小腿
+        ctx.fillRect(-14 + trot, -12 + bob, 4.5, 12);
+        ctx.fillRect(9 - trot, -12 + bob, 4.5, 12);
+        // 左後小腿 & 右前小腿
         ctx.fillStyle = '#72371b';
-        ctx.fillRect(-7 - trot, -13 + bob, 4.5, 13);
-        ctx.fillRect(16 + trot, -13 + bob, 4.5, 13);
+        ctx.fillRect(-7 - trot, -12 + bob, 4.5, 12);
+        ctx.fillRect(16 + trot, -12 + bob, 4.5, 12);
 
-        // 馬蹄
+        // 馬蹄（貼齊地面 y = 0）
         ctx.fillStyle = '#180a04';
         ctx.fillRect(-14 + trot, 0, 4.5, 3);
         ctx.fillRect(9 - trot, 0, 4.5, 3);
@@ -1604,14 +1619,14 @@
           }
         });
 
-        // ==================== 4. 房子 ====================
+        // ==================== 4. 房子 (招牌更名：윈터, PONYO, 민정) ====================
         const barnBaseW = isMobile ? 96 : 138;
         barnsData.forEach((b, idx) => {
           const bx = w * b.xRatio;
           drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
         });
 
-        // ==================== 5. 狗與馬 ====================
+        // ==================== 5. 狗與馬 (小馬肢體身軀自然諧調) ====================
         const dogScale = ((ranchConfig.characters.dog.scale || 130) / 100) * (isMobile ? 1.25 : 1.35);
         const horseScale = ((ranchConfig.characters.horse.scale || 120) / 100) * (isMobile ? 1.0 : 1.2);
 
@@ -1690,4 +1705,3 @@
   </script>
 </body>
 </html>
-
