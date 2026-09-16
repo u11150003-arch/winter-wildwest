@@ -32,8 +32,7 @@
       width: 100vw; height: 100vh;
       overflow: hidden;
       background: #7b9cb0;
-      /* 韓文與中英通用經典點陣字體 */
-      font-family: "GulimChe", "DotumChe", "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
+      font-family: "Pixelated MS Sans Serif", "Courier New", "GulimChe", monospace, sans-serif !important;
       cursor: default;
       transition: background 0.25s ease;
     }
@@ -47,7 +46,7 @@
     }
 
     button, a, .start-menu li {
-      font-family: "GulimChe", "DotumChe", "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
+      font-family: "Pixelated MS Sans Serif", "Courier New", monospace, sans-serif !important;
     }
 
     /* 頂部管理列 */
@@ -99,7 +98,6 @@
       z-index: 10;
       pointer-events: none;
     }
-    /* 手機端大標題字體顯著放大 */
     .ranch-header h2 {
       margin: 0;
       font-size: 24px;
@@ -123,18 +121,24 @@
       text-shadow: 1px 1px 0px #000;
     }
 
-    /* 地板提示文字 */
+    /* 地板提示文字：兩排相互居中、Windows 98 復古字體 */
     .floor-prompt-text {
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 4px;
       font-family: "Pixelated MS Sans Serif", "MS Sans Serif", "Microsoft Sans Serif", monospace !important;
       font-weight: bold;
-      font-size: 16px;
+      font-size: 15px;
+      line-height: 1.35;
       letter-spacing: 1.5px;
       color: #ffe066 !important;
       text-shadow: 2px 1px 0px #3a1e0b, -1px -1px 0px #3a1e0b, 1px -1px 0px #3a1e0b, -1px 1px 0px #3a1e0b;
-      text-align: center;
       white-space: nowrap;
       pointer-events: none;
       z-index: 15;
@@ -142,8 +146,9 @@
     }
     @media (max-width: 768px) {
       .floor-prompt-text {
-        font-size: 13.5px;
+        font-size: 13px;
         letter-spacing: 1px;
+        gap: 3px;
       }
     }
     @keyframes retroBlink {
@@ -418,10 +423,13 @@
       <p>KNOCK AND SEE WHO ANSWERS</p>
     </div>
 
-    <!-- 西部荒野 Canvas 與 Windows 98 復古提示語 -->
+    <!-- 西部荒野 Canvas 與 兩排相互居中的 Windows 98 復古提示語 -->
     <div class="ranch-canvas-wrap" id="ranchCanvasWrap">
       <canvas id="ranchCanvas"></canvas>
-      <div class="floor-prompt-text" id="floorPrompt">推開木門，看看誰在等你 🚪</div>
+      <div class="floor-prompt-text" id="floorPrompt">
+        <span>Open the door</span>
+        <span>See who's waiting for you 🚪</span>
+      </div>
     </div>
 
     <!-- 視訊通話分割容器 -->
@@ -656,8 +664,8 @@
       ]
     };
 
-    // 升級版本快取至流暢不跳針版本
-    const CONFIG_KEY = "winter_wildwest_v2026_smooth_start_v100";
+    // 升級版本快取
+    const CONFIG_KEY = "winter_wildwest_v2026_door_text_v110";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -901,9 +909,7 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // ==============================================================
-    // 播放引擎：流暢單次啟動（消除重複 seekTo 跳針）+ 5 秒連線遮罩 + 播畢自然停止
-    // ==============================================================
+    // 播放引擎：流暢單次啟動 + 5 秒連線遮罩 + 播畢自然停止
     function activateAndPlayBarnVideo(barn) {
       if (endStopTimer) clearTimeout(endStopTimer);
 
@@ -913,7 +919,6 @@
         clearTimeout(shield._hideTimer);
       }
 
-      // 暫停並隱藏其他非當前視訊
       barnsData.forEach(b => {
         const el = document.getElementById(`iframe_${b.id}`);
         if (el) {
@@ -939,10 +944,8 @@
         let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1`;
         if (startSec > 0) srcUrl += `&start=${startSec}`;
 
-        // 每次切換重新賦值，使 YouTube 原生乾淨從指定秒數載入，杜絕中途跳針
         activeIframe.src = srcUrl;
 
-        // 單次平滑指令：不再反覆發送 seekTo 造成來回卡頓
         const startSinglePlay = () => {
           if (activeIframe.contentWindow) {
             activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
@@ -952,7 +955,6 @@
 
         setTimeout(startSinglePlay, 400);
 
-        // 遮罩精準維持 5 秒 (5000ms)，確保跳轉結束後順暢揭幕
         if (shield) {
           shield._hideTimer = setTimeout(() => {
             startSinglePlay();
@@ -960,7 +962,6 @@
           }, 5000);
         }
 
-        // 若有設定結束秒數，到達時自然暫停停止，不自動循環
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
           endStopTimer = setTimeout(() => {
