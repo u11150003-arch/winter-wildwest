@@ -19,6 +19,7 @@
     }
 
     :root {
+      /* 低飽和度淡金色星形游標 */
       --soft-star-cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><polygon points='12,1.5 15.3,8.8 23.2,9.6 17.2,14.8 19,22.6 12,18.5 5,22.6 6.8,14.8 0.8,9.6 8.7,8.8' fill='%23ecd674' stroke='%238a7131' stroke-width='1.5'/></svg>") 5 5, pointer;
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-left: env(safe-area-inset-left, 0px);
@@ -31,7 +32,7 @@
       width: 100vw; height: 100vh;
       overflow: hidden;
       background: #7b9cb0;
-      font-family: "Pixelated MS Sans Serif", "Courier New", monospace, sans-serif !important;
+      font-family: "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
       cursor: default;
       transition: background 0.25s ease;
     }
@@ -45,29 +46,37 @@
     }
 
     button, a, .start-menu li {
-      font-family: "Pixelated MS Sans Serif", "Courier New", monospace, sans-serif !important;
+      font-family: "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
     }
 
-    /* 頂部管理列 */
+    /* 頂部管理選單列：平時完全隱藏，管理員模式時才於上方浮現 */
     .top-bar-wrapper {
       position: absolute;
       top: max(6px, env(safe-area-inset-top, 6px));
       left: max(6px, var(--safe-left));
       right: max(6px, var(--safe-right));
-      z-index: 100; display: flex; flex-direction: column;
-      background: transparent; border: none; pointer-events: none;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      background: transparent;
+      border: none;
+      pointer-events: none;
     }
     body.admin-mode .top-bar-wrapper {
-      background: #c0c0c0; border: 2px outset #fff; padding: 3px;
-      box-shadow: 1px 1px 4px rgba(0,0,0,0.4); pointer-events: auto;
+      display: flex !important;
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      padding: 3px;
+      box-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+      pointer-events: auto;
     }
+
     .top-actions-viewport {
       display: flex; gap: 4px; overflow-x: auto; white-space: nowrap; pointer-events: auto;
     }
     .top-actions-viewport button, .top-actions-viewport span {
       flex-shrink: 0; font-size: 11px; padding: 2px 6px; cursor: pointer; height: 25px;
     }
-    #authBtn { pointer-events: auto; align-self: flex-start; }
 
     .admin-only { display: none !important; }
     body.admin-mode .admin-only { display: inline-flex !important; }
@@ -105,18 +114,17 @@
       text-shadow: 1px 1px 0px #000;
     }
 
-    /* 地板提示文字：100% 經典復古像素點陣字體 */
+    /* 地板提示文字：Windows 98 復古字體風格 */
     .floor-prompt-text {
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      font-family: "PMingLiU", "MingLiU", "Pixelated MS Sans Serif", monospace !important;
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: 2px;
+      font-family: "Pixelated MS Sans Serif", "MS Sans Serif", "Microsoft Sans Serif", monospace !important;
+      font-weight: bold;
+      font-size: 16px;
+      letter-spacing: 1.5px;
       color: #ffe066 !important;
-      text-shadow: 2px 0px 0px #3a1e0b, 0px 2px 0px #3a1e0b, -1px 0px 0px #3a1e0b, 0px -1px 0px #3a1e0b, 2px 2px 0px #3a1e0b;
-      image-rendering: pixelated;
+      text-shadow: 2px 1px 0px #3a1e0b, -1px -1px 0px #3a1e0b, 1px -1px 0px #3a1e0b, -1px 1px 0px #3a1e0b;
       text-align: center;
       white-space: nowrap;
       pointer-events: none;
@@ -125,8 +133,8 @@
     }
     @media (max-width: 768px) {
       .floor-prompt-text {
-        font-size: 14.5px;
-        letter-spacing: 1.5px;
+        font-size: 13.5px;
+        letter-spacing: 1px;
       }
     }
     @keyframes retroBlink {
@@ -247,13 +255,13 @@
       border: none;
     }
 
-    /* 獨立在 wrapper 外面的連線中遮罩：統一大小且徹底隔絕暫停符號 */
+    /* 統一尺寸的「⭐️ 連線中...」動態遮罩：徹底消滅暫停符號 */
     .fixed-connecting-shield {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       z-index: 60;
       background: #000000;
-      display: none;
+      display: flex;
       align-items: center;
       justify-content: center;
       color: #ffe9c2;
@@ -261,12 +269,16 @@
       font-weight: bold;
       letter-spacing: 2px;
       pointer-events: auto;
+      transition: opacity 0.3s ease;
+      opacity: 0;
+      visibility: hidden;
     }
     .fixed-connecting-shield.active {
-      display: flex !important;
+      opacity: 1;
+      visibility: visible;
     }
 
-    /* 隱形透明層：防誤觸跳轉 */
+    /* 頂層防誤觸層：禁止點擊跳轉到 YouTube */
     .yt-pointer-guard {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -375,9 +387,10 @@
 </head>
 <body onclick="handleGlobalClick(event)">
 
+  <!-- 頂部管理工具列（管理員登入後才展開） -->
   <div class="top-bar-wrapper" id="topBarWrapper">
     <div class="top-actions-viewport" id="topActionsViewport">
-      <button id="authBtn" onclick="toggleAdmin(event)">🔒 管理員</button>
+      <button onclick="toggleAdmin(event)">🔓 退出管理</button>
       <button class="admin-only" style="background:#fff2b2; font-weight:bold;" onclick="openAdjustModal()">🔍 調視訊畫面/秒數</button>
       <button class="admin-only" onclick="openEnvironmentModal()">🏞️ 天空地表/地平線</button>
       <button class="admin-only" onclick="openCharactersModal()">🐶🐴 角色外觀與尺寸</button>
@@ -393,7 +406,7 @@
       <p>KNOCK AND SEE WHO ANSWERS</p>
     </div>
 
-    <!-- 西部荒野 Canvas 與 復古中文字 -->
+    <!-- 西部荒野 Canvas 與 Windows 98 復古提示語 -->
     <div class="ranch-canvas-wrap" id="ranchCanvasWrap">
       <canvas id="ranchCanvas"></canvas>
       <div class="floor-prompt-text" id="floorPrompt">推開木門，看看誰在等你 🚪</div>
@@ -415,7 +428,7 @@
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
               <div class="yt-pointer-guard"></div>
             </div>
-            <!-- 固定尺寸的「⭐️ 連線中...」遮罩，不再受 iframe 縮放影響，字體大小永遠絕對統一 -->
+            <!-- 固定大小的「⭐️ 連線中...」遮罩，監聽播放狀態精確揭開，絕不露出暫停符號 -->
             <div class="fixed-connecting-shield" id="connectingShield">⭐️ 連線中...</div>
           </div>
         </div>
@@ -544,6 +557,7 @@
         🐎 <strong>3. 返回西部荒野全景</strong>
       </li>
       <hr style="margin:4px 0;">
+      <!-- 點此切換管理員模式，不在畫面上方佔空間 -->
       <li onclick="toggleAdmin(event); toggleStartMenu(event);">⚙️ 切換管理員模式</li>
     </ul>
   </div>
@@ -567,9 +581,6 @@
     const ADMIN_PASSWORD = "admin";
     let isAdmin = false;
 
-    // 實裝新馬匹圖片與去背處理
-    const DEFAULT_HORSE_IMG = "https://lh3.googleusercontent.com/d/1BfVl4t24t7yTqM6PZtB_h4r-vT0Y4f2a"; // 備用透明圖
-
     const RANCH_MASTER_CONFIG = {
       "environment": {
         "horizonRatio": 0.67
@@ -581,7 +592,7 @@
         },
         "horse": {
           "image": "",
-          "scale": 125
+          "scale": 120
         }
       },
       "customProps": [
@@ -630,7 +641,7 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_horse_perfect_v40";
+    const CONFIG_KEY = "winter_wildwest_v2026_perfect_fix_final_v50";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -656,6 +667,7 @@
 
     let dogBubbleTimer = 0;
 
+    // Web Audio 授權解鎖
     let audioContextUnlocked = false;
     function unlockSafariAudio() {
       if (audioContextUnlocked) return;
@@ -754,7 +766,6 @@
       if (isAdmin) {
         isAdmin = false;
         document.body.classList.remove('admin-mode');
-        document.getElementById('authBtn').innerText = "🔒 管理員";
         document.querySelectorAll('.modal-win').forEach(m => m.style.display = 'none');
         alert("已退出管理員模式");
       } else {
@@ -762,8 +773,7 @@
         if (input === ADMIN_PASSWORD) {
           isAdmin = true;
           document.body.classList.add('admin-mode');
-          document.getElementById('authBtn').innerText = "🔓 退出管理";
-          alert("登入成功！已解鎖管理功能。");
+          alert("登入成功！已解鎖上方管理工具列。");
         } else if (input !== null) {
           alert("密碼錯誤！");
         }
@@ -876,18 +886,16 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 啟動專屬實體視訊插槽 + 徹底消滅暫停符號的連線遮罩機制
+    // ==============================================================
+    // 徹底消除暫停符號：精確監聽 YouTube 播放訊號揭幕
+    // ==============================================================
     function activateAndPlayBarnVideo(barn) {
       if (loopTimer) clearInterval(loopTimer);
 
-      // 獨立統一尺寸的連線中遮罩：持續 2.2 秒，精準掩蓋 YouTube 內部跳轉與暫停圖示
       const shield = document.getElementById('connectingShield');
       if (shield) {
-        shield.classList.add('active');
+        shield.classList.add('active'); // 立即拉起純黑連線遮罩
         clearTimeout(shield._hideTimer);
-        shield._hideTimer = setTimeout(() => {
-          shield.classList.remove('active');
-        }, 2200);
       }
 
       barnsData.forEach(b => {
@@ -920,6 +928,7 @@
           activeIframe.src = srcUrl;
         }
 
+        // 發送有聲播放與跳轉
         const sendPlay = () => {
           if (activeIframe.contentWindow) {
             activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
@@ -927,9 +936,16 @@
           }
         };
         sendPlay();
-        setTimeout(sendPlay, 200);
-        setTimeout(sendPlay, 600);
-        setTimeout(sendPlay, 1800); // 遮罩結束前再次強送播放，確保揭幕時必在運行
+        setTimeout(sendPlay, 250);
+        setTimeout(sendPlay, 700);
+
+        // 徹底防範暫停圖示：等待 2.6 秒確保影片完全處於播映狀態，再優雅揭開黑幕
+        if (shield) {
+          shield._hideTimer = setTimeout(() => {
+            sendPlay();
+            shield.classList.remove('active');
+          }, 2600);
+        }
 
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
@@ -944,6 +960,9 @@
         directVideo.pause(); directVideo.style.display = 'none';
         activeIframe.classList.add('active-video');
         activeIframe.src = `https://drive.google.com/file/d/${driveId}/preview`;
+        if (shield) {
+          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 1200);
+        }
       } else {
         if (activeIframe) activeIframe.classList.remove('active-video');
         directVideo.style.display = 'block';
@@ -958,11 +977,19 @@
             directVideo.play().then(() => { directVideo.muted = false; });
           });
         }
+        if (shield) {
+          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 800);
+        }
       }
     }
 
     function stopWinterVideo() {
       if (loopTimer) clearInterval(loopTimer);
+      const shield = document.getElementById('connectingShield');
+      if (shield) {
+        shield.classList.remove('active');
+        clearTimeout(shield._hideTimer);
+      }
       barnsData.forEach(b => {
         const el = document.getElementById(`iframe_${b.id}`);
         if (el && el.contentWindow) {
@@ -1393,17 +1420,16 @@
         ctx.restore();
       }
 
-      // 完美實裝：使用者上傳的像素馬匹 + 協調自然的行走肢體動畫
+      // 經典像素馬：身形比例協調、深色眼眸與四肢步態自然結合
       function drawNaturalWalkingHorse(x, y, scale) {
         ctx.save();
         ctx.translate(x, y);
         ctx.scale(scale * (horsePos.dir > 0 ? 1 : -1), scale);
 
-        // 自然的小馬顛簸節奏 (Trot Gait)
-        const bob = Math.sin(animTimer * 6) * 1.2;
-        const legSwing = Math.sin(animTimer * 6) * 4.0;
+        const bob = Math.sin(animTimer * 5.5) * 1.0;
+        const trot = Math.sin(animTimer * 5.5) * 3.5;
 
-        // 自訂圖片或是高精度向量還原
+        // 檢查是否有自訂小馬圖片
         const chars = ranchConfig.characters;
         if (chars.horse.image) {
           const holder = getRawImage(chars.horse.image);
@@ -1416,57 +1442,62 @@
           }
         }
 
-        // 以高精度像素還原上傳圖片中的像素馬（帶有合理四肢步態）
-        // 軀幹
-        ctx.fillStyle = '#87492c';
-        ctx.fillRect(-20, -32 + bob, 38, 19);
-        ctx.fillStyle = '#6b361e';
-        ctx.fillRect(-17, -19 + bob, 33, 5);
+        // 1. 馬尾
+        ctx.fillStyle = '#220f08';
+        ctx.fillRect(-22, -30 + bob, 5, 19);
 
-        // 頸部
-        ctx.fillStyle = '#87492c';
+        // 2. 軀幹主體
+        ctx.fillStyle = '#7a3e21';
+        ctx.fillRect(-18, -32 + bob, 36, 19);
+        ctx.fillStyle = '#632f17';
+        ctx.fillRect(-16, -18 + bob, 32, 5); // 腹部陰影
+
+        // 3. 頸部
+        ctx.fillStyle = '#7a3e21';
         ctx.beginPath();
-        ctx.moveTo(9, -29 + bob);
-        ctx.lineTo(21, -44 + bob);
-        ctx.lineTo(29, -41 + bob);
-        ctx.lineTo(17, -18 + bob);
+        ctx.moveTo(8, -28 + bob);
+        ctx.lineTo(19, -43 + bob);
+        ctx.lineTo(26, -40 + bob);
+        ctx.lineTo(15, -16 + bob);
         ctx.closePath();
         ctx.fill();
 
-        // 鬃毛
-        ctx.fillStyle = '#3f1a0d';
-        ctx.fillRect(10, -44 + bob, 7, 18);
-        ctx.fillRect(-24, -30 + bob, 5, 20); // 馬尾
+        // 4. 鬃毛
+        ctx.fillStyle = '#220f08';
+        ctx.fillRect(8, -43 + bob, 7, 18);
 
-        // 馬頭與眼睛
-        ctx.fillStyle = '#87492c';
-        ctx.fillRect(20, -50 + bob, 16, 13);
-        ctx.fillRect(32, -47 + bob, 6, 7); // 嘴鼻
-        ctx.fillStyle = '#220b05';
-        ctx.fillRect(34, -45 + bob, 3, 3); // 鼻孔
+        // 5. 馬頭與自然黑眼
+        ctx.fillStyle = '#7a3e21';
+        ctx.fillRect(18, -48 + bob, 15, 12);
+        ctx.fillRect(29, -45 + bob, 6, 7); // 嘴吻
+        ctx.fillStyle = '#1c0b05';
+        ctx.fillRect(32, -43 + bob, 2.5, 2.5); // 鼻孔
+        // 溫和自然的馬眼
+        ctx.fillStyle = '#110502';
+        ctx.fillRect(23, -46 + bob, 3, 3);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(24, -48 + bob, 3, 3); // 眼眶
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(25, -47 + bob, 2, 2); // 瞳孔
-        ctx.fillStyle = '#6b361e';
-        ctx.fillRect(21, -55 + bob, 4, 6); // 馬耳
+        ctx.fillRect(23.5, -46 + bob, 1, 1); // 微小高光
 
-        // 肢體四肢（交替擺動步態，腳底緊貼 y = 0 地平線）
-        ctx.fillStyle = '#5c2d18';
-        // 後右腳 & 前左腳
-        ctx.fillRect(-15 + legSwing, -13 + bob, 4.5, 13);
-        ctx.fillRect(10 - legSwing, -13 + bob, 4.5, 13);
-        // 後左腳 & 前右腳
-        ctx.fillStyle = '#7a3e23';
-        ctx.fillRect(-8 - legSwing, -13 + bob, 4.5, 13);
-        ctx.fillRect(17 + legSwing, -13 + bob, 4.5, 13);
+        // 馬耳朵
+        ctx.fillStyle = '#542611';
+        ctx.fillRect(19, -53 + bob, 4, 6);
+
+        // 6. 四肢（骨架相連、交錯擺動、腳底切齊 y = 0）
+        ctx.fillStyle = '#5c2d16';
+        // 右後腿 & 左前腿
+        ctx.fillRect(-14 + trot, -13 + bob, 4.5, 13);
+        ctx.fillRect(9 - trot, -13 + bob, 4.5, 13);
+        // 左後腿 & 右前腿
+        ctx.fillStyle = '#72371b';
+        ctx.fillRect(-7 - trot, -13 + bob, 4.5, 13);
+        ctx.fillRect(16 + trot, -13 + bob, 4.5, 13);
 
         // 馬蹄
-        ctx.fillStyle = '#1c0f08';
-        ctx.fillRect(-15 + legSwing, 0, 4.5, 3.5);
-        ctx.fillRect(10 - legSwing, 0, 4.5, 3.5);
-        ctx.fillRect(-8 - legSwing, 0, 4.5, 3.5);
-        ctx.fillRect(17 + legSwing, 0, 4.5, 3.5);
+        ctx.fillStyle = '#180a04';
+        ctx.fillRect(-14 + trot, 0, 4.5, 3);
+        ctx.fillRect(9 - trot, 0, 4.5, 3);
+        ctx.fillRect(-7 - trot, 0, 4.5, 3);
+        ctx.fillRect(16 + trot, 0, 4.5, 3);
 
         ctx.restore();
       }
@@ -1580,9 +1611,9 @@
           drawLowSatBarn(bx, horizonY, barnBaseW, b.name, idx === activeBarnIndex, b.customImg);
         });
 
-        // ==================== 5. 狗與馬 (小馬行走動作自然協調) ====================
+        // ==================== 5. 狗與馬 ====================
         const dogScale = ((ranchConfig.characters.dog.scale || 130) / 100) * (isMobile ? 1.25 : 1.35);
-        const horseScale = ((ranchConfig.characters.horse.scale || 125) / 100) * (isMobile ? 0.95 : 1.15);
+        const horseScale = ((ranchConfig.characters.horse.scale || 120) / 100) * (isMobile ? 1.0 : 1.2);
 
         if (isDogHeadingToBarn) {
           dogPos.dir = (dogPos.targetX > dogPos.x) ? 1 : -1;
