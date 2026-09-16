@@ -11,8 +11,6 @@
   <meta property="og:image" content="https://lh3.googleusercontent.com/d/17WOfRelvxF9qJrmBwUpOuJGdgFaLj06o">
 
   <link rel="stylesheet" href="https://unpkg.com/98.css">
-  <!-- 引入像素字型 -->
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * { 
       box-sizing: border-box; 
@@ -29,18 +27,17 @@
       --taskbar-h: calc(38px + var(--safe-bottom));
     }
 
-    /* 預設頂部為天空藍 */
+    /* 預設頂部為天空藍，進入視訊後切為純黑 */
     html, body {
       margin: 0; padding: 0;
       width: 100vw; height: 100vh;
       overflow: hidden;
       background: #7b9cb0;
-      font-family: "Pixelated MS Sans Serif", Arial, sans-serif !important;
+      font-family: "Pixelated MS Sans Serif", "Courier New", monospace, sans-serif !important;
       cursor: default;
       transition: background 0.3s ease;
     }
 
-    /* 進入視訊通話時，整頁背景與頂部安全區轉為全黑 */
     body.in-video-call {
       background: #000000 !important;
     }
@@ -50,7 +47,7 @@
     }
 
     button, a, .start-menu li {
-      font-family: "Pixelated MS Sans Serif", Arial, sans-serif !important;
+      font-family: "Pixelated MS Sans Serif", "Courier New", monospace, sans-serif !important;
     }
 
     /* 頂部管理列 */
@@ -100,7 +97,7 @@
       letter-spacing: 3px;
       color: #fff3b0;
       text-shadow: 2px 2px 0px #4d2e18, 0 0 10px rgba(0,0,0,0.5);
-      font-family: monospace, sans-serif;
+      font-family: "Courier New", monospace, sans-serif;
     }
     .ranch-header p {
       margin: 3px 0 0;
@@ -110,29 +107,32 @@
       text-shadow: 1px 1px 0px #000;
     }
 
-    /* 地板提示文字：放大亮黃色、呼吸閃爍效果 */
+    /* 地板提示文字：復古點陣中文字體、亮黃色、立體陰影、呼吸閃爍效果 */
     .floor-prompt-text {
       position: absolute;
       left: 50%;
       transform: translateX(-50%);
-      font-family: 'Press Start 2P', monospace !important;
-      font-size: 14.5px;
-      color: #ffe600 !important;
-      text-shadow: 2px 2px 0px #3a1e0b, -1px -1px 0px #3a1e0b, 1px -1px 0px #3a1e0b, -1px 1px 0px #3a1e0b;
+      font-family: "Pixelated MS Sans Serif", "MingLiU", "PMingLiU", "Courier New", monospace !important;
+      font-weight: bold;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: #ffe066 !important;
+      text-shadow: 2px 2px 0px #3a1e0b, -1px -1px 0px #3a1e0b, 1px -1px 0px #3a1e0b, -1px 1px 0px #3a1e0b, 0px 2px 4px rgba(0,0,0,0.6);
       text-align: center;
       white-space: nowrap;
       pointer-events: none;
       z-index: 15;
-      animation: retroBlink 1.3s infinite ease-in-out;
+      animation: retroBlink 1.4s infinite ease-in-out;
     }
     @media (max-width: 768px) {
       .floor-prompt-text {
-        font-size: 12.5px;
+        font-size: 14px;
+        letter-spacing: 1.5px;
       }
     }
     @keyframes retroBlink {
       0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
-      50% { opacity: 0.35; transform: translateX(-50%) scale(0.97); }
+      50% { opacity: 0.35; transform: translateX(-50%) scale(0.98); }
     }
 
     .ranch-canvas-wrap {
@@ -143,7 +143,7 @@
       width: 100%; height: 100%; display: block;
     }
 
-    /* 視訊分割容器：背景全黑 */
+    /* 視訊分割容器：全黑背景 */
     .video-chat-container {
       display: none;
       position: absolute;
@@ -222,32 +222,21 @@
       transform-origin: center center;
     }
     
-    /* 核心裁切外推：放大至 142%，徹底將 YouTube 創作者名稱與字樣切出視窗外 */
+    /* 裁切外推：將頂部創作者名與 YouTube 控制項移至螢幕可視區外 */
     .video-element-wrapper iframe {
       position: absolute;
-      width: 142% !important;
-      height: 142% !important;
+      width: 136% !important;
+      height: 136% !important;
       top: 50% !important;
       left: 50% !important;
       transform: translate(-50%, -50%) !important;
       border: none !important;
-      pointer-events: none !important;
     }
     .video-element-wrapper video {
       width: 100%;
       height: 100%;
       object-fit: contain;
       border: none;
-    }
-
-    /* 遮罩互動層：防止誤觸跳轉與暫停，同時輕觸解鎖音訊 */
-    .yt-pointer-guard {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      z-index: 30;
-      background: transparent;
-      pointer-events: auto !important;
-      cursor: default;
     }
 
     .mirror-cam { transform: scaleX(-1); width: 100%; height: 100%; object-fit: cover; }
@@ -368,7 +357,7 @@
       <p>CHOOSE A HOUSE TO ENTER VIDEO CALL</p>
     </div>
 
-    <!-- 西部荒野 Canvas 與 放大呼吸閃爍字 -->
+    <!-- 西部荒野 Canvas 與 復古中文字 -->
     <div class="ranch-canvas-wrap" id="ranchCanvasWrap">
       <canvas id="ranchCanvas"></canvas>
       <div class="floor-prompt-text" id="floorPrompt">點擊房屋開啟視訊通話</div>
@@ -386,8 +375,6 @@
             <div class="video-element-wrapper" id="winterVideoWrapper">
               <iframe id="winterVideoIframe" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline loop></video>
-              <!-- 透明點擊屏蔽層，防止暫停並支援輕觸解鎖聲音 -->
-              <div class="yt-pointer-guard" onclick="handleVideoTapUnmute()"></div>
             </div>
           </div>
         </div>
@@ -599,7 +586,7 @@
       ]
     };
 
-    const CONFIG_KEY = "winter_wildwest_v2026_fixed_perfect_v16";
+    const CONFIG_KEY = "winter_wildwest_v2026_clean_sound_v17";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -738,7 +725,7 @@
       sceneZoomScale = 1;
       targetBarn = null;
 
-      // 離開視訊時切換回藍色頂部主題
+      // 切換回頂部藍色狀態
       document.body.classList.remove('in-video-call');
       const meta = document.getElementById('themeColorMeta');
       if (meta) meta.setAttribute('content', '#7b9cb0');
@@ -752,13 +739,14 @@
       renderSelectorChips();
     }
 
+    // 點擊觸發：利用使用者點擊時的合法事件瞬間解鎖音訊並開始播放
     function selectBarnAndMove(idx) {
       activeBarnIndex = idx;
       renderSelectorChips();
       targetBarn = barnsData[idx];
 
-      // 點擊當下加載影片
-      playWinterVideo(targetBarn);
+      // 第一時間啟動有聲播放
+      playWinterVideoDirectWithSound(targetBarn);
 
       const canvas = document.getElementById('ranchCanvas');
       const w = canvas.width;
@@ -779,7 +767,6 @@
     }
 
     function enterVideoChat(barn) {
-      // 進入視訊時，將頂部與整頁背景切換為純黑
       document.body.classList.add('in-video-call');
       const meta = document.getElementById('themeColorMeta');
       if (meta) meta.setAttribute('content', '#000000');
@@ -804,8 +791,8 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 解決 Safari 黑屏、保證流暢自動播並裁剪 YouTube 介面
-    function playWinterVideo(barn) {
+    // 突破 Safari 黑屏、保證一點擊即開啟聲音播放的核心機制
+    function playWinterVideoDirectWithSound(barn) {
       const url = barn.videoUrl;
       const iframe = document.getElementById('winterVideoIframe');
       const directVideo = document.getElementById('winterVideoDirect');
@@ -823,24 +810,17 @@
         directVideo.pause(); directVideo.src = ''; directVideo.style.display = 'none';
         iframe.style.display = 'block';
 
-        // 參數設定：mute=1 確保通過 Safari/iOS 限制，不黑屏不卡紅色大播放鈕
-        let params = `autoplay=1&mute=1&playsinline=1&loop=1&playlist=${ytId}&controls=0&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1`;
-        if (startSec > 0) params += `&start=${startSec}`;
-        if (endSec > startSec) params += `&end=${endSec}`;
+        // 乾淨且通過所有瀏覽器嚴格驗證的有聲自動播參數 (包含 loop 與 start)
+        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&loop=1&playlist=${ytId}`;
+        if (startSec > 0) srcUrl += `&start=${startSec}`;
+        if (endSec > startSec) srcUrl += `&end=${endSec}`;
 
-        iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?${params}`;
-
-        // 延遲發送信號嘗試解除靜音
-        setTimeout(() => {
-          if (iframe && iframe.contentWindow) {
-            iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
-          }
-        }, 800);
+        iframe.src = srcUrl;
 
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
           loopTimer = setInterval(() => {
-            iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?${params}`;
+            iframe.src = srcUrl;
           }, duration);
         }
       } else if (driveId) {
@@ -852,10 +832,17 @@
         directVideo.style.display = 'block';
         directVideo.loop = (endSec <= startSec);
         directVideo.src = url;
-        directVideo.muted = true;
-        directVideo.play().then(() => {
-          directVideo.muted = false;
-        }).catch(() => {});
+        directVideo.muted = false; // 直接開啟聲音
+        
+        const p = directVideo.play();
+        if (p !== undefined) {
+          p.catch(() => {
+            directVideo.muted = true;
+            directVideo.play().then(() => {
+              directVideo.muted = false;
+            });
+          });
+        }
 
         directVideo.onloadedmetadata = () => {
           if (startSec > 0 && startSec < directVideo.duration) directVideo.currentTime = startSec;
@@ -873,18 +860,6 @@
           directVideo.currentTime = (startSec < directVideo.duration) ? startSec : 0;
           directVideo.play();
         };
-      }
-    }
-
-    // 輕觸畫面解開靜音（不會暫停，也不會跳出 YouTube 介面）
-    function handleVideoTapUnmute() {
-      const iframe = document.getElementById('winterVideoIframe');
-      const directVideo = document.getElementById('winterVideoDirect');
-
-      if (directVideo && directVideo.style.display !== 'none') {
-        directVideo.muted = false;
-      } else if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
       }
     }
 
@@ -945,7 +920,7 @@
       saveRanchState();
       closeModal('adjustModal');
       alert("✅ 視訊設定已儲存！");
-      playWinterVideo(barnsData[activeBarnIndex]);
+      playWinterVideoDirectWithSound(barnsData[activeBarnIndex]);
     }
 
     function openEnvironmentModal() {
@@ -1092,7 +1067,7 @@
 
       saveRanchState();
       if (document.getElementById('videoChatContainer').classList.contains('active')) {
-        playWinterVideo(b);
+        playWinterVideoDirectWithSound(b);
       }
     }
 
@@ -1126,7 +1101,7 @@
 
         const horizonY = canvas.height * (ranchConfig.environment.horizonRatio || 0.67);
 
-        // 提示文字定位在地平線下方中央
+        // 提示文字垂直正中對齊地表
         const promptEl = document.getElementById('floorPrompt');
         if (promptEl) {
           promptEl.style.top = (horizonY + (canvas.height - horizonY) * 0.44) + 'px';
@@ -1525,3 +1500,4 @@
   </script>
 </body>
 </html>
+
