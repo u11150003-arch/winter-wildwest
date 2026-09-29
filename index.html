@@ -7,7 +7,7 @@
   <title>WINTER WILDWEST</title>
 
   <meta property="og:title" content="WINTER WILDWEST">
-  <meta property="og:description" content="Visit Winter and Ponyo in the Wild West">
+  <meta property="og:description" content="Visit Winter and Pponyo in the Wild West">
   <meta property="og:image" content="https://lh3.googleusercontent.com/d/17WOfRelvxF9qJrmBwUpOuJGdgFaLj06o">
 
   <link rel="stylesheet" href="https://unpkg.com/98.css">
@@ -32,7 +32,8 @@
       width: 100vw; height: 100vh;
       overflow: hidden;
       background: #7b9cb0;
-      font-family: "Pixelated MS Sans Serif", "Courier New", "GulimChe", monospace, sans-serif !important;
+      /* 韓文與中英通用經典點陣字體 */
+      font-family: "GulimChe", "DotumChe", "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
       cursor: default;
       transition: background 0.25s ease;
     }
@@ -46,7 +47,7 @@
     }
 
     button, a, .start-menu li {
-      font-family: "Pixelated MS Sans Serif", "Courier New", monospace, sans-serif !important;
+      font-family: "GulimChe", "DotumChe", "Pixelated MS Sans Serif", "Microsoft Sans Serif", monospace, sans-serif !important;
     }
 
     /* 頂部管理列 */
@@ -98,6 +99,7 @@
       z-index: 10;
       pointer-events: none;
     }
+    /* 手機端大標題字體顯著放大 */
     .ranch-header h2 {
       margin: 0;
       font-size: 24px;
@@ -269,7 +271,7 @@
       border: none;
     }
 
-    /* 統一大小連線中遮罩：持續 5.0 秒 */
+    /* 統一大小連線中遮罩：持續 5.2 秒 */
     .fixed-connecting-shield {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -448,7 +450,7 @@
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline></video>
               <div class="yt-pointer-guard"></div>
             </div>
-            <!-- 遮罩時間 5 秒 -->
+            <!-- 遮罩時間 5.2 秒 -->
             <div class="fixed-connecting-shield" id="connectingShield">⭐️ 連線中...</div>
           </div>
         </div>
@@ -592,7 +594,7 @@
       </button>
     </div>
     <div class="taskbar-right">
-      <a href="https://www.instagram.com/winter_tst" target="_blank">Copyright © : winter_tst</a>
+      <a href="https://www.instagram.com/winter_tst" target="_blank">© : winter_tst</a>
     </div>
   </div>
 
@@ -664,8 +666,8 @@
       ]
     };
 
-    // 升級版本快取
-    const CONFIG_KEY = "winter_wildwest_v2026_door_text_v110";
+    // 升級版本快取至 5.2 秒版本
+    const CONFIG_KEY = "winter_wildwest_v2026_pponyo_5200ms_v120";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -909,7 +911,7 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 播放引擎：流暢單次啟動 + 5 秒連線遮罩 + 播畢自然停止
+    // 播放引擎：流暢單次啟動 + 5.2 秒連線遮罩 + 播畢自然停止
     function activateAndPlayBarnVideo(barn) {
       if (endStopTimer) clearTimeout(endStopTimer);
 
@@ -919,6 +921,7 @@
         clearTimeout(shield._hideTimer);
       }
 
+      // 暫停並隱藏其他非當前視訊
       barnsData.forEach(b => {
         const el = document.getElementById(`iframe_${b.id}`);
         if (el) {
@@ -955,11 +958,12 @@
 
         setTimeout(startSinglePlay, 400);
 
+        // 遮罩時間設定為 5.2 秒 (5200ms)
         if (shield) {
           shield._hideTimer = setTimeout(() => {
             startSinglePlay();
             shield.classList.remove('active');
-          }, 5000);
+          }, 5200);
         }
 
         if (endSec > startSec) {
@@ -975,7 +979,7 @@
         activeIframe.classList.add('active-video');
         activeIframe.src = `https://drive.google.com/file/d/${driveId}/preview`;
         if (shield) {
-          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 5000);
+          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 5200);
         }
       } else {
         if (activeIframe) activeIframe.classList.remove('active-video');
@@ -998,7 +1002,7 @@
         };
 
         if (shield) {
-          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 5000);
+          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 5200);
         }
       }
     }
@@ -1670,7 +1674,7 @@
             alpha = (showDuration - currentCycle) / fadeTime;
           }
 
-          const bubbleText = (cycleIndex % 2 === 0) ? "PONYO!!" : "Saddle Up";
+          const bubbleText = (cycleIndex % 2 === 0) ? "Pponyo!!" : "Saddle Up";
           drawFadingSpeechBubble(dogPos.x, dogPos.y - 50 * dogScale, bubbleText, alpha);
         }
 
