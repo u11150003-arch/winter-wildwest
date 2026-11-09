@@ -254,7 +254,7 @@
       transform-origin: center center;
     }
     
-    /* 恢復為最初始畫面比例：置中 50%，寬高 136%，臉部不再被任何遮塊截斷 */
+    /* 保持初始置中畫面：比例正常、臉部完整 */
     .video-element-wrapper iframe {
       position: absolute;
       width: 136% !important;
@@ -296,6 +296,49 @@
     .fixed-connecting-shield.active {
       opacity: 1;
       visibility: visible;
+    }
+
+    /* 通話結束遮罩（覆蓋所有 YouTube 結尾符號與推薦影片） */
+    .call-ended-shield {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 55;
+      background: #0a0a0a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: #ffe9c2;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease;
+      cursor: pointer;
+    }
+    .call-ended-shield.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .call-ended-badge {
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      color: #ffb8b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .call-replay-btn {
+      font-size: 11px;
+      padding: 4px 12px;
+      font-family: inherit;
+      cursor: pointer;
+      background: #c0c0c0;
+      border: 2px outset #fff;
+      font-weight: bold;
+    }
+    .call-replay-btn:active {
+      border: 2px inset #fff;
     }
 
     .yt-pointer-guard {
@@ -471,8 +514,13 @@
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline></video>
               <div class="yt-pointer-guard"></div>
             </div>
-            <!-- 遮罩時間 5.4 秒 -->
+            <!-- 連線中遮罩 (5.4s) -->
             <div class="fixed-connecting-shield" id="connectingShield">⭐️ 連線中...</div>
+            <!-- 通話播畢遮罩：完全覆蓋 YouTube 符號與頻道推薦資訊 -->
+            <div class="call-ended-shield" id="callEndedShield" onclick="replayCurrentVideo(event)">
+              <div class="call-ended-badge">🔴 CALL ENDED</div>
+              <button type="button" class="call-replay-btn">🔄 重新通話</button>
+            </div>
           </div>
         </div>
       </div>
@@ -582,7 +630,7 @@
     </div>
   </div>
 
-  <!-- 開始選單：順序 1. 返回視訊主頁 2. 前往 WINTER PLAYLIST 3. 回到原始 Desktop 網頁 -->
+  <!-- 開始選單：1. 返回視訊主頁 2. 前往 WINTER PLAYLIST 3. 回到原始 Desktop 網頁 -->
   <div id="startMenu" class="start-menu" onclick="event.stopPropagation()">
     <div class="start-menu-banner">
       <img src="https://raw.githubusercontent.com/u11150003-arch/winter-wildwest/main/Pponyohat.png" alt="Pponyo">
@@ -595,7 +643,6 @@
       </li>
       <li>
         <a href="https://winterplaylist.netlify.app">
-          <!-- 經典 Windows 98 復古雷射 CD 光碟與播放音符 -->
           <svg class="menu-custom-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="10" fill="#e3edf2" stroke="#222" stroke-width="1.4"/>
             <path d="M12 2C17.5 2 22 6.5 22 12" stroke="#ffffff" stroke-width="2" opacity="0.8"/>
@@ -610,7 +657,6 @@
       </li>
       <li>
         <a href="https://u11150003-arch.github.io/2027-winter-bday-desktop/">
-          <!-- 經典 Windows 98 CRT 電腦螢幕圖示 -->
           <svg class="menu-custom-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="2" y="3" width="20" height="14" rx="1.5" fill="#dcd8cf" stroke="#222" stroke-width="1.4"/>
             <rect x="4.5" y="5.5" width="15" height="9" fill="#008080" stroke="#777" stroke-width="1"/>
@@ -632,7 +678,7 @@
     </ul>
   </div>
 
-  <!-- 工作列：左下角保留 WINTER 按鈕，搭配狗圖示 -->
+  <!-- 工作列 -->
   <div class="taskbar">
     <div class="taskbar-left">
       <button type="button" onclick="toggleStartMenu(event)" style="font-weight:bold; display:flex; align-items:center; gap:6px; height:26px; padding:0 8px;">
@@ -649,10 +695,8 @@
     const ADMIN_PASSWORD = "admin";
     let isAdmin = false;
 
-    // 低飽和淡雅復古木屋 SVG
     const LOW_SAT_BARN_ICON = `<svg class="barn-icon-svg" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5L1.5 7H3.2V14.5H12.8V7H14.5L8 1.5Z" fill="#b08d74" stroke="#4a2e1b" stroke-width="1.2" stroke-linejoin="round"/><rect x="6.2" y="9.2" width="3.6" height="5.3" fill="#3d2112"/><rect x="4" y="6" width="2.2" height="2.2" fill="#d8cbbd" stroke="#5a3d28" stroke-width="0.7"/><rect x="9.8" y="6" width="2.2" height="2.2" fill="#d8cbbd" stroke="#5a3d28" stroke-width="0.7"/></svg>`;
 
-    // 房舍配置：윈터 100%, Pponyo 127%, 민정 110%
     const RANCH_MASTER_CONFIG = {
       "environment": {
         "horizonRatio": 0.67
@@ -693,13 +737,7 @@
           "customImg": "",
           "xRatio": 0.18,
           "videoUrl": "https://youtu.be/mDkAMfP2Yck?si=HCzbafh2nRJnASuE",
-          "adjust": {
-            "scale": 100,
-            "x": 50,
-            "y": 50,
-            "start": 0,
-            "end": 0
-          }
+          "adjust": { "scale": 100, "x": 50, "y": 50, "start": 0, "end": 0 }
         },
         {
           "id": "barn_pponyo",
@@ -708,13 +746,7 @@
           "customImg": "",
           "xRatio": 0.5,
           "videoUrl": "https://youtu.be/vDUytu76vIE?si=0DBj4HIGP08BZ7ZG",
-          "adjust": {
-            "scale": 127,
-            "x": 50,
-            "y": 50,
-            "start": 0,
-            "end": 0
-          }
+          "adjust": { "scale": 127, "x": 50, "y": 50, "start": 0, "end": 0 }
         },
         {
           "id": "barn_minjeong",
@@ -723,19 +755,12 @@
           "customImg": "",
           "xRatio": 0.82,
           "videoUrl": "https://youtu.be/wNfXNDE09tw?si=8bFK11XOljw-ezno",
-          "adjust": {
-            "scale": 110,
-            "x": 50,
-            "y": 50,
-            "start": 0,
-            "end": 0
-          }
+          "adjust": { "scale": 110, "x": 50, "y": 50, "start": 0, "end": 0 }
         }
       ]
     };
 
-    // 升級快取版本鍵
-    const CONFIG_KEY = "winter_wildwest_v2026_fixed_face_autoplay_v2";
+    const CONFIG_KEY = "winter_wildwest_v2026_hide_end_yt_v3";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -758,7 +783,6 @@
     let sceneZoomScale = 1;
     let targetBarn = null;
     let endStopTimer = null;
-
     let dogBubbleTimer = 0;
 
     let audioContextUnlocked = false;
@@ -1004,10 +1028,50 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 播放核心：解除手機端 Autoplay 限制，保證必自動撥放
+    // 播放結束時觸發：自動拉起「通話結束」防護遮罩，防止露出 YouTube 相關影片與上傳者資訊
+    function onVideoEndReached() {
+      const endShield = document.getElementById('callEndedShield');
+      if (endShield) endShield.classList.add('active');
+
+      barnsData.forEach(b => {
+        const el = document.getElementById(`iframe_${b.id}`);
+        if (el && el.contentWindow) {
+          try {
+            el.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
+          } catch(e) {}
+        }
+      });
+      const directVideo = document.getElementById('winterVideoDirect');
+      if (directVideo) directVideo.pause();
+    }
+
+    function replayCurrentVideo(e) {
+      if (e) e.stopPropagation();
+      const endShield = document.getElementById('callEndedShield');
+      if (endShield) endShield.classList.remove('active');
+      activateAndPlayBarnVideo(barnsData[activeBarnIndex]);
+    }
+
+    // 監聽 YouTube 播放器廣播事件（監聽狀態 0: YT.PlayerState.ENDED）
+    window.addEventListener('message', (event) => {
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (data && (data.event === 'infoDelivery' || data.info)) {
+          const info = data.info;
+          // playerState: 0 表示影片播放結束
+          if (info && info.playerState === 0) {
+            onVideoEndReached();
+          }
+        }
+      } catch (err) {}
+    });
+
     function activateAndPlayBarnVideo(barn) {
       if (endStopTimer) clearTimeout(endStopTimer);
       unlockSafariAudio();
+
+      const endShield = document.getElementById('callEndedShield');
+      if (endShield) endShield.classList.remove('active');
 
       const shield = document.getElementById('connectingShield');
       if (shield) {
@@ -1039,7 +1103,7 @@
         directVideo.pause(); directVideo.style.display = 'none';
         activeIframe.classList.add('active-video');
 
-        // 手機端帶 mute=0 容易被瀏覽器擋 autoplay，採用 1 啟動再即刻 unMute 是行動裝置通用的自動播放保險
+        // 參數：啟用 JS API 狀態監聽，關閉推薦影片，啟用 playsinline
         let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
         if (startSec > 0) srcUrl += `&start=${startSec}`;
 
@@ -1048,18 +1112,17 @@
         const forceTriggerPlay = () => {
           if (activeIframe.contentWindow) {
             try {
+              activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*');
               activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
               activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
             } catch(e) {}
           }
         };
 
-        // 多次心跳確認發送指令，確保 iframe 載入完畢即刻播放，不卡在紅色按鍵
         setTimeout(forceTriggerPlay, 300);
         setTimeout(forceTriggerPlay, 800);
         setTimeout(forceTriggerPlay, 1500);
 
-        // 遮罩時間 5.4 秒 (5400ms)
         if (shield) {
           shield._hideTimer = setTimeout(() => {
             forceTriggerPlay();
@@ -1070,11 +1133,7 @@
         if (endSec > startSec) {
           const duration = (endSec - startSec) * 1000;
           endStopTimer = setTimeout(() => {
-            if (activeIframe.contentWindow) {
-              try {
-                activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
-              } catch(e) {}
-            }
+            onVideoEndReached();
           }, duration);
         }
       } else if (driveId && activeIframe) {
@@ -1101,7 +1160,7 @@
         }
 
         directVideo.onended = () => {
-          directVideo.pause();
+          onVideoEndReached();
         };
 
         if (shield) {
@@ -1117,6 +1176,9 @@
         shield.classList.remove('active');
         clearTimeout(shield._hideTimer);
       }
+      const endShield = document.getElementById('callEndedShield');
+      if (endShield) endShield.classList.remove('active');
+
       barnsData.forEach(b => {
         const el = document.getElementById(`iframe_${b.id}`);
         if (el && el.contentWindow) {
@@ -1481,7 +1543,6 @@
           ctx.fillStyle = '#170c0a';
           ctx.fillRect(-doorW/2, -doorH, doorW, doorH);
 
-          // 招牌木板
           ctx.fillStyle = '#b38865';
           ctx.fillRect(-width * 0.44, -h + 6, width * 0.88, 18);
           ctx.strokeStyle = '#5a3d28';
