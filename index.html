@@ -6,6 +6,10 @@
   <meta name="theme-color" content="#7b9cb0" id="themeColorMeta">
   <title>WINTER WILDWEST</title>
 
+  <!-- 網頁與手機加入主畫面縮圖（白底小狗圖示） -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23ffffff'/><image href='https://lh3.googleusercontent.com/d/17WOfRelvxF9qJrmBwUpOuJGdgFaLj06o' width='90' height='90' x='5' y='5' preserveAspectRatio='xMidYMid meet'/></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' fill='%23ffffff'/><image href='https://lh3.googleusercontent.com/d/17WOfRelvxF9qJrmBwUpOuJGdgFaLj06o' width='160' height='160' x='10' y='10' preserveAspectRatio='xMidYMid meet'/></svg>">
+
   <meta property="og:title" content="WINTER WILDWEST">
   <meta property="og:description" content="Visit Winter and Pponyo in the Wild West">
   <meta property="og:image" content="https://lh3.googleusercontent.com/d/17WOfRelvxF9qJrmBwUpOuJGdgFaLj06o">
@@ -99,7 +103,6 @@
       z-index: 10;
       pointer-events: none;
     }
-    /* 手機端大標題字體顯著放大 */
     .ranch-header h2 {
       margin: 0;
       font-size: 24px;
@@ -333,7 +336,7 @@
       font-weight: bold;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
       transition: all 0.2s ease;
       white-space: nowrap;
@@ -351,6 +354,14 @@
       background: #6f3b19 !important;
       border-color: #ffd700 !important;
       color: #ffff80 !important;
+    }
+    /* 低飽和度淡雅小木屋圖示 */
+    .barn-icon-svg {
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      vertical-align: middle;
+      flex-shrink: 0;
     }
 
     /* 彈窗樣式 */
@@ -568,7 +579,7 @@
     </div>
   </div>
 
-  <!-- 開始選單：WINTER WILDWEST 簡約圖示與乾淨風格 -->
+  <!-- 開始選單：WINTER WILDWEST 簡約圖示風格 -->
   <div id="startMenu" class="start-menu" onclick="event.stopPropagation()">
     <div class="start-menu-banner">
       <img src="https://lh3.googleusercontent.com/d/17WOfRelvxF9qJrmBwUpOuJGdgFaLj06o" alt="Pponyo Dog">
@@ -612,7 +623,10 @@
     const ADMIN_PASSWORD = "admin";
     let isAdmin = false;
 
-    // 房舍配置：윈터, Pponyo, 민정
+    // 低飽和淡雅復古木屋 SVG
+    const LOW_SAT_BARN_ICON = `<svg class="barn-icon-svg" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5L1.5 7H3.2V14.5H12.8V7H14.5L8 1.5Z" fill="#b08d74" stroke="#4a2e1b" stroke-width="1.2" stroke-linejoin="round"/><rect x="6.2" y="9.2" width="3.6" height="5.3" fill="#3d2112"/><rect x="4" y="6" width="2.2" height="2.2" fill="#d8cbbd" stroke="#5a3d28" stroke-width="0.7"/><rect x="9.8" y="6" width="2.2" height="2.2" fill="#d8cbbd" stroke="#5a3d28" stroke-width="0.7"/></svg>`;
+
+    // 房舍配置：更新為指定 3 首新影片，並重置縮放與位置為預設值 (scale: 100, x: 50, y: 50)
     const RANCH_MASTER_CONFIG = {
       "environment": {
         "horizonRatio": 0.67
@@ -652,8 +666,8 @@
           "isKorean": true,
           "customImg": "",
           "xRatio": 0.18,
-          "videoUrl": "https://youtu.be/dVhNMMejAtA?si=3hNsInSYm_CyfAcF",
-          "adjust": { "scale": 146, "x": 50, "y": 50, "start": 0, "end": 0 }
+          "videoUrl": "https://youtu.be/mDkAMfP2Yck?si=HCzbafh2nRJnASuE",
+          "adjust": { "scale": 100, "x": 50, "y": 50, "start": 0, "end": 0 }
         },
         {
           "id": "barn_pponyo",
@@ -661,8 +675,8 @@
           "isKorean": false,
           "customImg": "",
           "xRatio": 0.50,
-          "videoUrl": "https://youtu.be/Nxybqp22WNI?si=BnwmB_4uMEmIqO1a",
-          "adjust": { "scale": 146, "x": 44, "y": 50, "start": 0, "end": 0 }
+          "videoUrl": "https://youtu.be/vDUytu76vIE?si=0DBj4HIGP08BZ7ZG",
+          "adjust": { "scale": 100, "x": 50, "y": 50, "start": 0, "end": 0 }
         },
         {
           "id": "barn_minjeong",
@@ -670,14 +684,14 @@
           "isKorean": true,
           "customImg": "",
           "xRatio": 0.82,
-          "videoUrl": "https://youtu.be/nOA1qS4AaiQ?si=aNod6kn17hyqYDTK",
-          "adjust": { "scale": 190, "x": 50, "y": 50, "start": 0, "end": 0 }
+          "videoUrl": "https://youtu.be/wNfXNDE09tw?si=8bFK11XOljw-ezno",
+          "adjust": { "scale": 100, "x": 50, "y": 50, "start": 0, "end": 0 }
         }
       ]
     };
 
-    // 升級版本快取至 5.4 秒版本
-    const CONFIG_KEY = "winter_wildwest_v2026_pponyo_5400ms_v121";
+    // 升級版本快取至全新 3 支影片與預設比例配置
+    const CONFIG_KEY = "winter_wildwest_v2026_newvids_resetscale_5400ms_v1";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -823,7 +837,7 @@
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = `barn-chip ${idx === activeBarnIndex ? 'active' : ''} ${b.isKorean ? 'korean-chip' : ''}`;
-        btn.innerHTML = `🏠 ${b.name}`;
+        btn.innerHTML = `${LOW_SAT_BARN_ICON}<span>${b.name}</span>`;
         btn.onclick = (e) => {
           e.stopPropagation();
           selectBarnAndMove(idx);
@@ -920,7 +934,6 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 播放引擎：流暢單次啟動 + 5.4 秒連線遮罩 + 播畢自然停止
     function activateAndPlayBarnVideo(barn) {
       if (endStopTimer) clearTimeout(endStopTimer);
 
@@ -930,7 +943,6 @@
         clearTimeout(shield._hideTimer);
       }
 
-      // 暫停並隱藏其他非當前視訊
       barnsData.forEach(b => {
         const el = document.getElementById(`iframe_${b.id}`);
         if (el) {
