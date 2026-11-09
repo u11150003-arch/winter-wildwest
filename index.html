@@ -123,7 +123,7 @@
       text-shadow: 1px 1px 0px #000;
     }
 
-    /* 地板提示文字：兩排相互居中、Windows 98 復古字體 */
+    /* 地板提示文字 */
     .floor-prompt-text {
       position: absolute;
       left: 50%;
@@ -271,7 +271,7 @@
       border: none;
     }
 
-    /* 統一大小連線中遮罩：持續 5.2 秒 */
+    /* 統一大小連線中遮罩：持續 5.4 秒 */
     .fixed-connecting-shield {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -381,7 +381,6 @@
       z-index: 2500;
     }
     .taskbar-left { display: flex; align-items: center; gap: 4px; overflow-x: auto; flex: 1; }
-    .task-item-btn { font-size: 11px; padding: 2px 6px; height: 26px; white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
     .taskbar-right { font-size: 11px; display: flex; align-items: center; padding-left: 8px; flex-shrink: 0; height: 26px; }
     .taskbar-right a { color: #000; text-decoration: none; font-weight: bold; border-bottom: 1px dotted #555; }
 
@@ -395,13 +394,21 @@
       background: linear-gradient(180deg, #5c4033, #8b6b55);
       color: #fff; font-weight: bold; padding: 8px 10px; font-size: 13px; margin-bottom: 4px;
       letter-spacing: 1px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .start-menu-banner img {
+      width: 20px; height: 20px; border-radius: 3px; object-fit: cover;
     }
     .start-menu ul { list-style: none; margin: 0; padding: 0; }
     .start-menu li {
-      padding: 7px 10px; font-size: 12px; display: flex; align-items: center; gap: 8px;
+      padding: 7px 10px; font-size: 12px; display: flex; align-items: center; gap: 8px; cursor: pointer;
     }
     .start-menu li:hover { background: #5c4033; color: #fff; }
     .start-menu a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 8px; width: 100%; }
+    .menu-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 16px; height: 16px; font-size: 12px; opacity: 0.85; flex-shrink: 0;
+    }
   </style>
 </head>
 <body onclick="handleGlobalClick(event)">
@@ -425,7 +432,7 @@
       <p>KNOCK AND SEE WHO ANSWERS</p>
     </div>
 
-    <!-- 西部荒野 Canvas 與 兩排相互居中的 Windows 98 復古提示語 -->
+    <!-- 西部荒野 Canvas 與提示語 -->
     <div class="ranch-canvas-wrap" id="ranchCanvasWrap">
       <canvas id="ranchCanvas"></canvas>
       <div class="floor-prompt-text" id="floorPrompt">
@@ -450,7 +457,7 @@
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline></video>
               <div class="yt-pointer-guard"></div>
             </div>
-            <!-- 遮罩時間 5.2 秒 -->
+            <!-- 遮罩時間 5.4 秒 -->
             <div class="fixed-connecting-shield" id="connectingShield">⭐️ 連線中...</div>
           </div>
         </div>
@@ -561,36 +568,39 @@
     </div>
   </div>
 
-  <!-- 開始選單 -->
+  <!-- 開始選單：WINTER WILDWEST 簡約圖示與乾淨風格 -->
   <div id="startMenu" class="start-menu" onclick="event.stopPropagation()">
-    <div class="start-menu-banner">🤠 WINTER WILDWEST</div>
+    <div class="start-menu-banner">
+      <img src="https://lh3.googleusercontent.com/d/17WOfRelvxF9qJrmBwUpOuJGdgFaLj06o" alt="Pponyo Dog">
+      <span>WINTER WILDWEST</span>
+    </div>
     <ul>
       <li>
         <a href="https://u11150003-arch.github.io/2027-winter-bday-desktop/">
-          🖥️ <strong>1. 回到原始 Desktop 網頁</strong>
+          <span class="menu-icon">🖵</span> <strong>1. 回到原始 Desktop 網頁</strong>
         </a>
       </li>
       <li>
-        <a href="https://u11150003-arch.github.io/winter-cd-player/">
-          💿 <strong>2. 前往 WINTER CD PLAYER</strong>
+        <a href="https://winterplaylist.netlify.app">
+          <span class="menu-icon">♫</span> <strong>2. 前往 WINTER PLAYLIST</strong>
         </a>
       </li>
       <li onclick="returnToRanchMap(); toggleStartMenu(event);">
-        🐎 <strong>3. 返回西部荒野全景</strong>
+        <span class="menu-icon">⌂</span> <strong>3. 返回視訊主頁</strong>
       </li>
-      <hr style="margin:4px 0;">
-      <li onclick="toggleAdmin(event); toggleStartMenu(event);">⚙️ 切換管理員模式</li>
+      <hr style="margin:4px 0; border:none; border-top:1px solid #7f9db9;">
+      <li onclick="toggleAdmin(event); toggleStartMenu(event);">
+        <span class="menu-icon">⚙</span> 切換管理員模式
+      </li>
     </ul>
   </div>
 
-  <!-- 工作列 -->
+  <!-- 工作列：已去除 WILDWEST 按鍵，WINTER 圖示更新為主頁小狗 -->
   <div class="taskbar">
     <div class="taskbar-left">
-      <button type="button" onclick="toggleStartMenu(event)" style="font-weight:bold; display:flex; align-items:center; gap:4px; height:26px; padding:0 6px;">
-        🤠 WINTER
-      </button>
-      <button type="button" onclick="returnToRanchMap()" style="font-weight:bold; display:flex; align-items:center; gap:4px; height:26px; padding:0 6px;">
-        🐎 WILDWEST
+      <button type="button" onclick="toggleStartMenu(event)" style="font-weight:bold; display:flex; align-items:center; gap:6px; height:26px; padding:0 8px;">
+        <img src="https://lh3.googleusercontent.com/d/17WOfRelvxF9qJrmBwUpOuJGdgFaLj06o" style="width:16px; height:16px; object-fit:cover; border-radius:2px;" alt="dog">
+        <span>WINTER</span>
       </button>
     </div>
     <div class="taskbar-right">
@@ -666,8 +676,8 @@
       ]
     };
 
-    // 升級版本快取至 5.2 秒版本
-    const CONFIG_KEY = "winter_wildwest_v2026_pponyo_5200ms_v120";
+    // 升級版本快取至 5.4 秒版本
+    const CONFIG_KEY = "winter_wildwest_v2026_pponyo_5400ms_v121";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -804,7 +814,6 @@
       }
     }
 
-    // 按鍵標籤：Pponyo 採用與其他英文一致的 Pixelated MS Sans Serif
     function renderSelectorChips() {
       const bar = document.getElementById('barnSelectorBar');
       if (!bar) return;
@@ -911,7 +920,7 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
-    // 播放引擎：流暢單次啟動 + 5.2 秒連線遮罩 + 播畢自然停止
+    // 播放引擎：流暢單次啟動 + 5.4 秒連線遮罩 + 播畢自然停止
     function activateAndPlayBarnVideo(barn) {
       if (endStopTimer) clearTimeout(endStopTimer);
 
@@ -958,12 +967,12 @@
 
         setTimeout(startSinglePlay, 400);
 
-        // 遮罩時間設定為 5.2 秒 (5200ms)
+        // 遮罩時間設定為 5.4 秒 (5400ms)
         if (shield) {
           shield._hideTimer = setTimeout(() => {
             startSinglePlay();
             shield.classList.remove('active');
-          }, 5200);
+          }, 5400);
         }
 
         if (endSec > startSec) {
@@ -979,7 +988,7 @@
         activeIframe.classList.add('active-video');
         activeIframe.src = `https://drive.google.com/file/d/${driveId}/preview`;
         if (shield) {
-          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 5200);
+          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 5400);
         }
       } else {
         if (activeIframe) activeIframe.classList.remove('active-video');
@@ -1002,7 +1011,7 @@
         };
 
         if (shield) {
-          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 5200);
+          shield._hideTimer = setTimeout(() => shield.classList.remove('active'), 5400);
         }
       }
     }
@@ -1327,7 +1336,6 @@
         ctx.restore();
       }
 
-      // 木屋招牌繪製：Pponyo 採用復古等寬電腦英文，韓文使用復古點陣
       function drawLowSatBarn(x, y, width, title, isSelected, customImgUrl, isKorean) {
         const h = width * 0.92;
         ctx.save();
@@ -1450,7 +1458,6 @@
         ctx.restore();
       }
 
-      // 自然前腿相連像素馬
       function drawNaturalWalkingHorse(x, y, scale) {
         ctx.save();
         ctx.translate(x, y);
@@ -1471,22 +1478,18 @@
           }
         }
 
-        // 1. 馬尾
         ctx.fillStyle = '#220f08';
         ctx.fillRect(-22, -30 + bob, 5, 20);
 
-        // 2. 肌肉根部：胸肩根部加厚，前腿直接自深色胸膛向下生長
         ctx.fillStyle = '#6b351a';
         ctx.fillRect(-17, -22 + bob, 9, 13);
         ctx.fillRect(6, -24 + bob, 14, 15);
 
-        // 3. 軀幹主體
         ctx.fillStyle = '#7a3e21';
         ctx.fillRect(-18, -32 + bob, 38, 20);
         ctx.fillStyle = '#632f17';
         ctx.fillRect(-16, -17 + bob, 34, 6);
 
-        // 4. 頸部
         ctx.fillStyle = '#7a3e21';
         ctx.beginPath();
         ctx.moveTo(8, -28 + bob);
@@ -1496,11 +1499,9 @@
         ctx.closePath();
         ctx.fill();
 
-        // 5. 鬃毛
         ctx.fillStyle = '#220f08';
         ctx.fillRect(8, -43 + bob, 7, 18);
 
-        // 6. 馬頭與眼睛
         ctx.fillStyle = '#7a3e21';
         ctx.fillRect(18, -48 + bob, 15, 12);
         ctx.fillRect(29, -45 + bob, 6, 7);
@@ -1515,7 +1516,6 @@
         ctx.fillStyle = '#542611';
         ctx.fillRect(19, -53 + bob, 4, 6);
 
-        // 7. 四肢下段
         ctx.fillStyle = '#5c2d16';
         ctx.fillRect(-14 + trot, -11 + bob, 4.5, 12);
         ctx.fillRect(8 - trot, -11 + bob, 5, 12);
@@ -1524,7 +1524,6 @@
         ctx.fillRect(-7 - trot, -11 + bob, 4.5, 12);
         ctx.fillRect(14 + trot, -11 + bob, 5, 12);
 
-        // 馬蹄
         ctx.fillStyle = '#180a04';
         ctx.fillRect(-14 + trot, 0, 4.5, 3);
         ctx.fillRect(8 - trot, 0, 5, 3);
