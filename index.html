@@ -254,12 +254,12 @@
       transform-origin: center center;
     }
     
-    /* 放大並向上偏移，完全裁切 YouTube 頂部標題列與上傳者資訊 */
+    /* 恢復為最初始畫面比例：置中 50%，寬高 136%，臉部不再被任何遮塊截斷 */
     .video-element-wrapper iframe {
       position: absolute;
-      width: 144% !important;
-      height: 170% !important;
-      top: 42% !important;
+      width: 136% !important;
+      height: 136% !important;
+      top: 50% !important;
       left: 50% !important;
       transform: translate(-50%, -50%) !important;
       border: none !important;
@@ -273,16 +273,6 @@
       height: 100%;
       object-fit: contain;
       border: none;
-    }
-
-    /* 頂部遮擋防護板：防止載入或暫停時標題浮出 */
-    .yt-title-blocker {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 56px;
-      background: #000000;
-      z-index: 48;
-      pointer-events: none;
     }
 
     /* 統一大小連線中遮罩：持續 5.4 秒 */
@@ -479,7 +469,6 @@
               <iframe id="iframe_barn_pponyo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <iframe id="iframe_barn_minjeong" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
               <video id="winterVideoDirect" style="width:100%; height:100%; display:none;" autoplay playsinline></video>
-              <div class="yt-title-blocker"></div>
               <div class="yt-pointer-guard"></div>
             </div>
             <!-- 遮罩時間 5.4 秒 -->
@@ -593,7 +582,7 @@
     </div>
   </div>
 
-  <!-- 開始選單：要求順序 1. 返回視訊主頁 2. 前往 WINTER PLAYLIST 3. 回到原始 Desktop 網頁 -->
+  <!-- 開始選單：順序 1. 返回視訊主頁 2. 前往 WINTER PLAYLIST 3. 回到原始 Desktop 網頁 -->
   <div id="startMenu" class="start-menu" onclick="event.stopPropagation()">
     <div class="start-menu-banner">
       <img src="https://raw.githubusercontent.com/u11150003-arch/winter-wildwest/main/Pponyohat.png" alt="Pponyo">
@@ -606,7 +595,7 @@
       </li>
       <li>
         <a href="https://winterplaylist.netlify.app">
-          <!-- 具象化經典 Windows 98 復古雷射 CD 光碟與立體播放器 -->
+          <!-- 經典 Windows 98 復古雷射 CD 光碟與播放音符 -->
           <svg class="menu-custom-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="10" fill="#e3edf2" stroke="#222" stroke-width="1.4"/>
             <path d="M12 2C17.5 2 22 6.5 22 12" stroke="#ffffff" stroke-width="2" opacity="0.8"/>
@@ -621,7 +610,7 @@
       </li>
       <li>
         <a href="https://u11150003-arch.github.io/2027-winter-bday-desktop/">
-          <!-- 具象化經典 Windows 98 CRT 電腦螢幕圖示 -->
+          <!-- 經典 Windows 98 CRT 電腦螢幕圖示 -->
           <svg class="menu-custom-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="2" y="3" width="20" height="14" rx="1.5" fill="#dcd8cf" stroke="#222" stroke-width="1.4"/>
             <rect x="4.5" y="5.5" width="15" height="9" fill="#008080" stroke="#777" stroke-width="1"/>
@@ -643,7 +632,7 @@
     </ul>
   </div>
 
-  <!-- 工作列：左下角保留 WINTER 按鈕，搭配新版小狗圖示 -->
+  <!-- 工作列：左下角保留 WINTER 按鈕，搭配狗圖示 -->
   <div class="taskbar">
     <div class="taskbar-left">
       <button type="button" onclick="toggleStartMenu(event)" style="font-weight:bold; display:flex; align-items:center; gap:6px; height:26px; padding:0 8px;">
@@ -663,7 +652,7 @@
     // 低飽和淡雅復古木屋 SVG
     const LOW_SAT_BARN_ICON = `<svg class="barn-icon-svg" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5L1.5 7H3.2V14.5H12.8V7H14.5L8 1.5Z" fill="#b08d74" stroke="#4a2e1b" stroke-width="1.2" stroke-linejoin="round"/><rect x="6.2" y="9.2" width="3.6" height="5.3" fill="#3d2112"/><rect x="4" y="6" width="2.2" height="2.2" fill="#d8cbbd" stroke="#5a3d28" stroke-width="0.7"/><rect x="9.8" y="6" width="2.2" height="2.2" fill="#d8cbbd" stroke="#5a3d28" stroke-width="0.7"/></svg>`;
 
-    // 房舍配置：全面採用指定畫面比例 (윈터 100%, Pponyo 127%, 민정 110%) 與 GitHub 新圖源
+    // 房舍配置：윈터 100%, Pponyo 127%, 민정 110%
     const RANCH_MASTER_CONFIG = {
       "environment": {
         "horizonRatio": 0.67
@@ -745,8 +734,8 @@
       ]
     };
 
-    // 升級快取版本鍵，強制使新比例與 GitHub raw 圖源立即生效
-    const CONFIG_KEY = "winter_wildwest_v2026_github_pponyohat_v1";
+    // 升級快取版本鍵
+    const CONFIG_KEY = "winter_wildwest_v2026_fixed_face_autoplay_v2";
     let saved = localStorage.getItem(CONFIG_KEY);
     let ranchConfig = saved ? JSON.parse(saved) : RANCH_MASTER_CONFIG;
     let barnsData = ranchConfig.barns;
@@ -792,7 +781,6 @@
       } catch(e) {}
     }
 
-    // 自動將 github.com/blob 轉為 raw.githubusercontent.com 直連圖片
     function normalizeImageUrl(url) {
       if (!url) return '';
       if (url.includes('github.com') && url.includes('/blob/')) {
@@ -803,7 +791,6 @@
       return url;
     }
 
-    // 建立純白底小狗 Favicon，解決各瀏覽器分頁與加入主畫面的破圖問題
     function setupDynamicFavicon() {
       const dogImg = new Image();
       dogImg.crossOrigin = "anonymous";
@@ -937,7 +924,7 @@
         if (ytId) {
           const adj = b.adjust || { start: 0, end: 0 };
           const startSec = parseInt(adj.start, 10) || 0;
-          let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=0&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1`;
+          let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1`;
           if (startSec > 0) srcUrl += `&start=${startSec}`;
           if (!iframe.src || iframe.src === 'about:blank') {
             iframe.src = srcUrl;
@@ -1017,8 +1004,10 @@
       wrapper.style.transform = `scale(${scaleVal}) translate(${transX}%, ${transY}%)`;
     }
 
+    // 播放核心：解除手機端 Autoplay 限制，保證必自動撥放
     function activateAndPlayBarnVideo(barn) {
       if (endStopTimer) clearTimeout(endStopTimer);
+      unlockSafariAudio();
 
       const shield = document.getElementById('connectingShield');
       if (shield) {
@@ -1031,7 +1020,9 @@
         if (el) {
           el.classList.remove('active-video');
           if (b.id !== barn.id && el.contentWindow) {
-            el.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
+            try {
+              el.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
+            } catch(e) {}
           }
         }
       });
@@ -1048,24 +1039,30 @@
         directVideo.pause(); directVideo.style.display = 'none';
         activeIframe.classList.add('active-video');
 
-        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1`;
+        // 手機端帶 mute=0 容易被瀏覽器擋 autoplay，採用 1 啟動再即刻 unMute 是行動裝置通用的自動播放保險
+        let srcUrl = `https://www.youtube.com/embed/${ytId}?autoplay=1&mute=0&playsinline=1&controls=0&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
         if (startSec > 0) srcUrl += `&start=${startSec}`;
 
         activeIframe.src = srcUrl;
 
-        const startSinglePlay = () => {
+        const forceTriggerPlay = () => {
           if (activeIframe.contentWindow) {
-            activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
-            activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+            try {
+              activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
+              activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+            } catch(e) {}
           }
         };
 
-        setTimeout(startSinglePlay, 400);
+        // 多次心跳確認發送指令，確保 iframe 載入完畢即刻播放，不卡在紅色按鍵
+        setTimeout(forceTriggerPlay, 300);
+        setTimeout(forceTriggerPlay, 800);
+        setTimeout(forceTriggerPlay, 1500);
 
         // 遮罩時間 5.4 秒 (5400ms)
         if (shield) {
           shield._hideTimer = setTimeout(() => {
-            startSinglePlay();
+            forceTriggerPlay();
             shield.classList.remove('active');
           }, 5400);
         }
@@ -1074,7 +1071,9 @@
           const duration = (endSec - startSec) * 1000;
           endStopTimer = setTimeout(() => {
             if (activeIframe.contentWindow) {
-              activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
+              try {
+                activeIframe.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
+              } catch(e) {}
             }
           }, duration);
         }
@@ -1121,7 +1120,9 @@
       barnsData.forEach(b => {
         const el = document.getElementById(`iframe_${b.id}`);
         if (el && el.contentWindow) {
-          el.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
+          try {
+            el.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'pauseVideo', args: [] }), '*');
+          } catch(e) {}
           el.classList.remove('active-video');
         }
       });
